@@ -12,10 +12,10 @@ import {
 } from 'recharts';
 
 const data = [
-  { name: 'درآمد', value: 141000, color: '#10B981' },
-  { name: 'مصارف', value: 70000, color: '#F59E0B' },
-  { name: 'سود ناخالص', value: 71000, color: '#EF4444' },
-  { name: 'سود خالص', value: -55500, color: '#3B82F6' },
+  { name: 'درآمد', value: 18500, color: '#10B981' },
+  { name: 'مصارف', value: 8500, color: '#F59E0B' },
+  { name: 'سود ناخالص', value: 10000, color: '#EF4444' },
+  { name: 'سود خالص', value: 4200, color: '#3B82F6' },
 ];
 
 const FinancialChart: React.FC = () => {
@@ -37,7 +37,7 @@ const FinancialChart: React.FC = () => {
             axisLine={false} 
             tickLine={false} 
             tick={{ fill: '#64748B', fontSize: 12 }}
-            tickFormatter={(value) => `${value.toLocaleString()}`}
+            tickFormatter={(value) => `$${value.toLocaleString()}`}
           />
           <Tooltip 
             cursor={{ fill: '#F1F5F9' }}
@@ -47,7 +47,7 @@ const FinancialChart: React.FC = () => {
               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
               textAlign: 'right'
             }}
-            formatter={(value: number) => [value.toLocaleString() + ' AFN', '']}
+            formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
           />
           <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={40}>
             {data.map((entry, index) => (

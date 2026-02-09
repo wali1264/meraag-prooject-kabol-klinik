@@ -35,8 +35,8 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="کل عواید"
-          value="۱۴۱,۰۰۰"
-          currency="AFN"
+          value="۱۸,۵۰۰"
+          currency="$"
           icon={<DollarSign size={24} />}
           iconBg="bg-emerald-100 text-emerald-600"
         />
@@ -49,15 +49,15 @@ const Dashboard: React.FC = () => {
         />
         <StatCard
           title="سود خالص"
-          value="۵۵,۵۰۰-"
-          currency="AFN"
+          value="۴,۲۰۰"
+          currency="$"
           icon={<TrendingUp size={24} />}
           iconBg="bg-indigo-100 text-indigo-600"
         />
         <StatCard
           title="مجموع مصارف"
-          value="۷۰,۰۰۰"
-          currency="AFN"
+          value="۸,۵۰۰"
+          currency="$"
           icon={<Wallet size={24} />}
           iconBg="bg-rose-100 text-rose-600"
         />
@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Financial Chart */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">وضعیت مالی (AFN)</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-6">وضعیت مالی (USD $)</h3>
           <FinancialChart />
         </div>
 

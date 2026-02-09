@@ -1,34 +1,28 @@
 
 import React from 'react';
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Legend, 
   PieChart, 
   Pie, 
   Cell,
-  LineChart,
-  Line,
   AreaChart,
   Area
 } from 'recharts';
 import { 
   BarChart3, 
   Download, 
-  FilePieChart, 
   TrendingUp, 
   Calendar, 
   Filter, 
-  ChevronDown,
-  Printer,
+  Printer, 
   FileSpreadsheet,
   ArrowUpRight,
-  ArrowDownRight
+  User,
+  DollarSign
 } from 'lucide-react';
 
 const monthlyData = [
@@ -46,54 +40,64 @@ const serviceDistribution = [
   { name: 'صدور ویزه', value: 20, color: '#F59E0B' },
 ];
 
-const Reports: React.FC = () => {
+interface ReportsProps {
+  travelers?: any[];
+}
+
+const Reports: React.FC<ReportsProps> = ({ travelers = [] }) => {
+  
+  // Calculate Real Profit for a traveler
+  const calculateTravelerProfit = (t: any) => {
+    const parse = (v: any) => parseFloat(v?.toString().replace(/,/g, '')) || 0;
+    
+    // Profits per service
+    const visaProfit = parse(t.visaSelling) - parse(t.visaPurchase);
+    const flightProfit = parse(t.flightSelling) - parse(t.flightPurchase);
+    const madinahProfit = (parse(t.hotelSelling) - parse(t.hotelPurchase)) * (parse(t.hotelNights) || 1);
+    const makkahProfit = (parse(t.hotelMakkahSelling) - parse(t.hotelMakkahPurchase)) * (parse(t.hotelMakkahNights) || 1);
+    const transportProfit = parse(t.transportSelling) - parse(t.transportPurchase);
+    const foodProfit = parse(t.foodSelling) - parse(t.foodPurchase);
+    const repFee = parse(t.representativeFee); // Representative fee is pure revenue/profit for company
+
+    const totalProfit = visaProfit + flightProfit + madinahProfit + makkahProfit + transportProfit + foodProfit + repFee;
+    const totalCost = parse(t.visaPurchase) + parse(t.flightPurchase) + 
+                     (parse(t.hotelPurchase) * (parse(t.hotelNights) || 1)) + 
+                     (parse(t.hotelMakkahPurchase) * (parse(t.hotelMakkahNights) || 1)) + 
+                     parse(t.transportPurchase) + parse(t.foodPurchase);
+    const totalSale = parse(t.visaSelling) + parse(t.flightSelling) + 
+                     (parse(t.hotelSelling) * (parse(t.hotelNights) || 1)) + 
+                     (parse(t.hotelMakkahSelling) * (parse(t.hotelMakkahNights) || 1)) + 
+                     parse(t.transportSelling) + parse(t.foodSelling) + repFee;
+
+    return { totalProfit, totalCost, totalSale };
+  };
+
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-emerald-500 text-white rounded-[24px] flex items-center justify-center shadow-xl shadow-emerald-100">
+          <div className="w-16 h-16 bg-[#108548] text-white rounded-[24px] flex items-center justify-center shadow-xl shadow-green-100">
             <BarChart3 size={32} />
           </div>
           <div>
             <h2 className="text-3xl font-black text-slate-800">گزارش‌های هوشمند</h2>
-            <p className="text-slate-500 mt-1 font-medium">تحلیل دقیق وضعیت مالی و عملکرد عملیاتی شرکت</p>
+            <p className="text-slate-500 mt-1 font-medium">تحلیل دقیق سود حقیقی و عملکرد عملیاتی</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-white p-1 rounded-2xl border border-slate-100 flex gap-1">
-            <button className="px-5 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-200">سال ۱۴۰۳</button>
-            <button className="px-5 py-3 text-slate-500 hover:bg-slate-50 rounded-xl font-bold text-sm transition-all">سال ۱۴۰۲</button>
-          </div>
-          <button className="flex items-center gap-2 px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black transition-all shadow-xl shadow-emerald-50">
+          <button className="flex items-center gap-2 px-6 py-4 bg-[#108548] hover:bg-[#0d6e3c] text-white rounded-2xl font-black transition-all shadow-xl shadow-green-50">
             <Download size={20} />
-            خروجی جامع
+            خروجی اکسل سود
           </button>
         </div>
       </div>
 
-      {/* Main Analysis Cards */}
+      {/* Main Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Revenue vs Expenses Line Chart */}
         <div className="lg:col-span-2 bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-black text-slate-800">روند عواید و مصارف</h3>
-              <p className="text-xs text-slate-400 font-bold mt-1">مقایسه ماهانه در نیم‌سال اول</p>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                <span className="text-xs font-bold text-slate-500">عواید</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-rose-400 rounded-full"></div>
-                <span className="text-xs font-bold text-slate-500">مصارف</span>
-              </div>
-            </div>
-          </div>
-
+          <h3 className="text-xl font-black text-slate-800">روند عواید و مصارف عمومی</h3>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={monthlyData}>
@@ -102,57 +106,34 @@ const Reports: React.FC = () => {
                     <stop offset="5%" stopColor="#10B981" stopOpacity={0.1}/>
                     <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                   </linearGradient>
-                  <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FB7185" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#FB7185" stopOpacity={0}/>
-                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 700 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 700 }} tickFormatter={(val) => `${val/1000}k`} dx={-10} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', textAlign: 'right' }}
-                />
-                <Area type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
-                <Area type="monotone" dataKey="expenses" stroke="#FB7185" strokeWidth={4} fillOpacity={1} fill="url(#colorExp)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 700 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 700 }} />
+                <Tooltip contentStyle={{ borderRadius: '24px', border: 'none', textAlign: 'right' }} />
+                <Area type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={4} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="expenses" stroke="#FB7185" strokeWidth={4} fill="transparent" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Service Distribution Pie Chart */}
-        <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 flex flex-col items-center justify-between">
-          <div className="w-full text-right">
-            <h3 className="text-xl font-black text-slate-800">توزیع درآمدی</h3>
-            <p className="text-xs text-slate-400 font-bold mt-1">سهم هر خدمت از کل عواید</p>
-          </div>
-
+        <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 flex flex-col items-center">
+          <h3 className="text-xl font-black text-slate-800 w-full text-right mb-8">سهم خدمات از سود</h3>
           <div className="h-[250px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={serviceDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={8}
-                  dataKey="value"
-                >
-                  {serviceDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                  ))}
+                <Pie data={serviceDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value">
+                  {serviceDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
-                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-               <span className="text-2xl font-black text-slate-800">۱۰۰٪</span>
-               <span className="text-[10px] font-bold text-slate-400">کل خدمات</span>
+               <TrendingUp size={24} className="text-emerald-500 mb-1" />
+               <span className="text-xs font-bold text-slate-400">تحلیل سود</span>
             </div>
           </div>
-
-          <div className="w-full space-y-3">
+          <div className="w-full space-y-3 mt-4">
             {serviceDistribution.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
                 <div className="flex items-center gap-3">
@@ -166,98 +147,104 @@ const Reports: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Insights and Action Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="p-3 bg-blue-50 text-blue-500 rounded-2xl">
-               <TrendingUp size={24} />
-            </div>
-            <div className="flex items-center gap-1 text-emerald-500 font-black text-xs bg-emerald-50 px-2 py-1 rounded-lg">
-              <ArrowUpRight size={14} />
-              ۱۲٪+
-            </div>
-          </div>
-          <div>
-            <p className="text-slate-400 text-xs font-bold">میانگین سود هر مسافر</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1">۱۸,۴۰۰ AFN</h4>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="p-3 bg-amber-50 text-amber-500 rounded-2xl">
-               <Calendar size={24} />
-            </div>
-          </div>
-          <div>
-            <p className="text-slate-400 text-xs font-bold">سودآورترین ماه</p>
-            <h4 className="text-2xl font-black text-slate-800 mt-1">سنبله ۱۴۰۳</h4>
-          </div>
-        </div>
-
-        <div className="bg-indigo-600 p-6 rounded-[32px] shadow-xl shadow-indigo-100 flex flex-col justify-between text-white lg:col-span-2">
-           <div className="flex justify-between items-start">
-             <div>
-                <h4 className="text-xl font-black">گزارش سریع مالی</h4>
-                <p className="text-indigo-200 text-xs font-bold mt-1">دریافت آخرین ترازنامه در قالب‌های مختلف</p>
-             </div>
-             <FilePieChart size={32} className="opacity-40" />
-           </div>
-           
-           <div className="flex gap-3 mt-6">
-              <button className="flex-1 bg-white/10 hover:bg-white/20 transition-all p-4 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm">
-                 <Printer size={18} /> چاپ مستقیم
-              </button>
-              <button className="flex-1 bg-white text-indigo-600 hover:bg-indigo-50 transition-all p-4 rounded-2xl flex items-center justify-center gap-2 font-black text-sm">
-                 <FileSpreadsheet size={18} /> خروجی اکسل
-              </button>
-           </div>
-        </div>
-      </div>
-
-      {/* Comparison Table Section */}
+      {/* NEW: INDIVIDUAL TRAVELER PROFIT TABLE */}
       <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="text-xl font-black text-slate-800">ترازنامه فصلی (نیم‌سال اول)</h3>
-          <button className="flex items-center gap-2 text-slate-400 hover:text-slate-600 font-bold text-sm">
-            <Filter size={18} /> فیلتر ستون‌ها
+        <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-emerald-50/30">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-[#108548]">
+                <TrendingUp size={20} />
+             </div>
+             <div>
+                <h3 className="text-xl font-black text-slate-800">گزارش سود حقیقی به تفکیک مسافر</h3>
+                <p className="text-xs font-bold text-slate-400 mt-1">محاسبه خالص سود از تمامی خدمات پکیج</p>
+             </div>
+          </div>
+          <button className="flex items-center gap-2 text-slate-400 hover:text-[#108548] font-bold text-sm">
+            <Filter size={18} /> فیلتر مسافران
           </button>
         </div>
+        
         <div className="overflow-x-auto">
           <table className="w-full text-right border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="px-8 py-5 text-sm font-black text-slate-500">ماه مالی</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">مجموع عواید</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">مجموع مصارف</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">سود خالص</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">درصد بازگشت</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">نام مسافر</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">نوع سفر</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">مجموع فروش ($)</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">مجموع خرید ($)</th>
+                <th className="px-8 py-5 text-sm font-black text-[#108548]">سود خالص نهایی ($)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {monthlyData.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-8 py-6 font-black text-slate-700">{row.name}</td>
-                  <td className="px-8 py-6 font-bold text-slate-600">{row.revenue.toLocaleString()} AFN</td>
-                  <td className="px-8 py-6 font-bold text-slate-600">{row.expenses.toLocaleString()} AFN</td>
-                  <td className="px-8 py-6">
-                    <span className={`px-4 py-1.5 rounded-full text-xs font-black ${row.profit > 15000 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                      {row.profit.toLocaleString()} AFN
-                    </span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full max-w-[100px] overflow-hidden">
-                         <div className="h-full bg-indigo-500" style={{ width: `${(row.profit/row.revenue)*100}%` }}></div>
+              {travelers.length > 0 ? travelers.map((t, idx) => {
+                const { totalProfit, totalCost, totalSale } = calculateTravelerProfit(t);
+                return (
+                  <tr key={idx} className="hover:bg-emerald-50/20 transition-colors group">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <User size={16} className="text-slate-300" />
+                        <span className="font-black text-slate-700">{t.name}</span>
                       </div>
-                      <span className="text-xs font-black text-slate-400">{Math.round((row.profit/row.revenue)*100)}٪</span>
-                    </div>
+                    </td>
+                    <td className="px-8 py-6">
+                       <span className={`px-3 py-1 rounded-lg text-[10px] font-bold ${t.tripType === 'عمره' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                        {t.tripType}
+                       </span>
+                    </td>
+                    <td className="px-8 py-6 font-bold text-slate-600">{totalSale.toLocaleString()} $</td>
+                    <td className="px-8 py-6 font-bold text-rose-400">{totalCost.toLocaleString()} $</td>
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col">
+                        <span className="text-lg font-black text-[#108548]">
+                          {totalProfit.toLocaleString()} $
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-300">
+                          {Math.round((totalProfit / totalSale) * 100)}٪ حاشیه سود
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }) : (
+                <tr>
+                  <td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-bold">هیچ مسافری یافت نشد.</td>
+                </tr>
+              )}
+            </tbody>
+            {travelers.length > 0 && (
+              <tfoot className="bg-slate-900 text-white">
+                <tr>
+                  <td className="px-8 py-5 font-black">مجموع کل</td>
+                  <td className="px-8 py-5"></td>
+                  <td className="px-8 py-5 font-black text-blue-300">
+                    {travelers.reduce((acc, t) => acc + calculateTravelerProfit(t).totalSale, 0).toLocaleString()} $
+                  </td>
+                  <td className="px-8 py-5 font-black text-rose-300">
+                    {travelers.reduce((acc, t) => acc + calculateTravelerProfit(t).totalCost, 0).toLocaleString()} $
+                  </td>
+                  <td className="px-8 py-5 font-black text-emerald-400 text-xl">
+                    {travelers.reduce((acc, t) => acc + calculateTravelerProfit(t).totalProfit, 0).toLocaleString()} $
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              </tfoot>
+            )}
           </table>
+        </div>
+      </div>
+
+      {/* Summary Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><TrendingUp size={24} /></div>
+            <div className="flex items-center gap-1 text-emerald-500 font-black text-xs bg-emerald-50 px-2 py-1 rounded-lg"><ArrowUpRight size={14} /> ۱۲٪+</div>
+          </div>
+          <div>
+            <p className="text-slate-400 text-xs font-bold">سود خالص کل (مسافران)</p>
+            <h4 className="text-2xl font-black text-slate-800 mt-1">
+              {travelers.reduce((acc, t) => acc + calculateTravelerProfit(t).totalProfit, 0).toLocaleString()} $
+            </h4>
+          </div>
         </div>
       </div>
     </div>

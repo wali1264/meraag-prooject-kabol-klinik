@@ -9,33 +9,76 @@ import Expenses from './components/Expenses';
 import Commission from './components/Commission';
 import History from './components/History';
 import Reports from './components/Reports';
+import ArabicCompanies, { ArabicCompany } from './components/ArabicCompanies';
+
+export const useLanguage = () => {
+  return { language: 'fa' as 'fa' | 'en' };
+};
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  const [companies, setCompanies] = useState<ArabicCompany[]>([
+    {
+      id: '1',
+      name: 'شركة مكة للفنادق والخدمات',
+      code: 'SA-101',
+      location: 'مکه مکرمه',
+      phone: '+966 12 345 6789',
+      email: 'info@makkah-hotels.sa',
+      balance: 2500.50,
+      ledger: [
+        { id: 'l1', date: '۱۴۰۳/۰۳/۰۱', description: 'رزرو گروهی هتل مکه - ۲۰ نفر', debit: 3000, credit: 0 },
+        { id: 'l2', date: '۱۴۰۳/۰۳/۰۵', description: 'پرداخت قسط اول حواله', debit: 0, credit: 499.50 }
+      ]
+    }
+  ]);
+
+  const [travelers, setTravelers] = useState<any[]>([
+    {
+      id: '1',
+      code: 'TRV-1042',
+      name: 'احمد رحمانی',
+      tripType: 'عمره',
+      visaPurchase: '100',
+      visaSelling: '150',
+      flightPurchase: '450',
+      flightSelling: '520',
+      hotelNights: '5',
+      hotelPurchase: '40',
+      hotelSelling: '50',
+      hotelMakkahNights: '5',
+      hotelMakkahPurchase: '60',
+      hotelMakkahSelling: '70',
+      transportPurchase: '80',
+      transportSelling: '100',
+      foodPurchase: '30',
+      foodSelling: '50',
+      representativeFee: '20',
+      totalPayable: '1520',
+      ledger: [
+        { id: 'l1', date: '۱۴۰۳/۰۲/۱۵', description: 'هزینه پکیج', debit: 1520, credit: 0 }
+      ]
+    }
+  ]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-right" dir="rtl">
-      {/* Sidebar */}
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
         {activeTab === 'dashboard' ? (
           <Dashboard />
         ) : activeTab === 'travelers' ? (
-          <Travelers />
-        ) : activeTab === 'services' ? (
-          <Services />
-        ) : activeTab === 'accounts' ? (
-          <Accounts />
-        ) : activeTab === 'expenses' ? (
-          <Expenses />
-        ) : activeTab === 'commission' ? (
-          <Commission />
-        ) : activeTab === 'history' ? (
-          <History />
+          <Travelers 
+            companies={companies} 
+            travelers={travelers} 
+            onUpdateTravelers={setTravelers}
+            onUpdateCompanies={setCompanies}
+          />
+        ) : activeTab === 'arabic-companies' ? (
+          <ArabicCompanies companies={companies} onUpdateCompanies={setCompanies} />
         ) : activeTab === 'reports' ? (
-          <Reports />
+          <Reports travelers={travelers} />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-400 font-medium">
              این بخش در حال توسعه است

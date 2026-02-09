@@ -19,6 +19,8 @@ import {
   Eye
 } from 'lucide-react';
 
+const SAR_RATE = 3.75;
+
 interface Expense {
   id: string;
   description: string;
@@ -39,7 +41,7 @@ const Expenses: React.FC = () => {
     {
       id: '1',
       description: 'کرایه دفتر مرکزی - ماه جوزا',
-      amount: '۳۰,۰۰۰',
+      amount: '۴۰۰',
       category: 'کرایه',
       date: '۱۴۰۳/۰۳/۰۱',
       payee: 'مالک ساختمان'
@@ -47,7 +49,7 @@ const Expenses: React.FC = () => {
     {
       id: '2',
       description: 'معاشات کارمندان بخش فروش',
-      amount: '۸۵,۰۰۰',
+      amount: '۱,۲۰۰',
       category: 'معاشات',
       date: '۱۴۰۳/۰۳/۰۵',
       payee: 'کارمندان'
@@ -55,7 +57,7 @@ const Expenses: React.FC = () => {
     {
       id: '3',
       description: 'بیل برق و انترنت دفتر',
-      amount: '۴,۵۰۰',
+      amount: '۶۰',
       category: 'خدمات',
       date: '۱۴۰۳/۰۳/۰۸',
       payee: 'شرکت برشنا / افغان تلیکام'
@@ -139,6 +141,8 @@ const Expenses: React.FC = () => {
     e.description.includes(searchTerm) || e.category.includes(searchTerm) || e.payee.includes(searchTerm)
   );
 
+  const totalExpenses = 1660;
+
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -160,14 +164,14 @@ const Expenses: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 font-bold text-sm">مجموع مصارف ماه</span>
+            <span className="text-slate-400 font-bold text-sm">مجموع مصارف ماه ($)</span>
             <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center">
               <TrendingDown size={24} />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-slate-800">۱۱۹,۵۰۰</h3>
-            <p className="text-xs text-slate-400 font-bold">AFGHANI (AFN)</p>
+            <h3 className="text-3xl font-black text-slate-800">{totalExpenses.toLocaleString()} $</h3>
+            <p className="text-xs text-slate-400 font-bold">≈ {(totalExpenses * SAR_RATE).toLocaleString()} SAR</p>
           </div>
         </div>
 
@@ -179,7 +183,7 @@ const Expenses: React.FC = () => {
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-slate-800 text-amber-600">۳۰,۰۰۰</h3>
+            <h3 className="text-3xl font-black text-amber-600">۴۰۰ $</h3>
             <p className="text-xs text-slate-400 font-bold">سهم ۲۵٪ از کل مصارف</p>
           </div>
         </div>
@@ -192,7 +196,7 @@ const Expenses: React.FC = () => {
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-slate-800 text-indigo-500">۸۵,۰۰۰</h3>
+            <h3 className="text-3xl font-black text-indigo-500">۱,۲۰۰ $</h3>
             <p className="text-xs text-slate-400 font-bold">بزرگترین بخش هزینه</p>
           </div>
         </div>
@@ -226,7 +230,7 @@ const Expenses: React.FC = () => {
                 <th className="px-8 py-5 text-sm font-black text-slate-500">دسته بندی</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">دریافت کننده</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">تاریخ پرداخت</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">مبلغ (AFN)</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">مبلغ ($)</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500 text-center">عملیات</th>
               </tr>
             </thead>
@@ -257,9 +261,12 @@ const Expenses: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-lg font-black text-rose-600">
-                      {expense.amount}
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="text-lg font-black text-rose-600">
+                        {expense.amount} $
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-300">≈ {(parseFloat(expense.amount.replace(/,/g, '')) * SAR_RATE).toLocaleString()} SAR</span>
+                    </div>
                   </td>
                   <td className="px-8 py-6 text-center relative">
                     <button 
@@ -299,16 +306,6 @@ const Expenses: React.FC = () => {
                   </td>
                 </tr>
               ))}
-              {filteredExpenses.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-4 text-slate-300">
-                      <Search size={64} strokeWidth={1} />
-                      <p className="text-slate-400 font-bold text-lg">هیچ موردی یافت نشد</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -374,7 +371,7 @@ const Expenses: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-400 block text-right">مبلغ هزینه (AFN)</label>
+                <label className="text-xs font-black text-slate-400 block text-right">مبلغ هزینه (USD $)</label>
                 <div className="relative">
                   <input 
                     required
@@ -385,7 +382,7 @@ const Expenses: React.FC = () => {
                     placeholder="۰"
                     className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all font-black text-2xl text-rose-600"
                   />
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">AFN</span>
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">$</span>
                 </div>
               </div>
 
