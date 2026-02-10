@@ -9,7 +9,8 @@ const Dashboard: React.FC = () => {
   const today = new Intl.DateTimeFormat('fa-AF', {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit'
+    day: '2-digit',
+    numberingSystem: 'latn'
   }).format(new Date());
 
   return (
@@ -35,28 +36,28 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="کل عواید"
-          value="۱۸,۵۰۰"
+          value="18,500"
           currency="$"
           icon={<DollarSign size={24} />}
           iconBg="bg-emerald-100 text-emerald-600"
         />
         <StatCard
           title="تعداد مسافران"
-          value="۲"
+          value="2"
           currency="نفر"
           icon={<Users size={24} />}
           iconBg="bg-blue-100 text-blue-600"
         />
         <StatCard
           title="سود خالص"
-          value="۴,۲۰۰"
+          value="4,200"
           currency="$"
           icon={<TrendingUp size={24} />}
           iconBg="bg-indigo-100 text-indigo-600"
         />
         <StatCard
           title="مجموع مصارف"
-          value="۸,۵۰۰"
+          value="8,500"
           currency="$"
           icon={<Wallet size={24} />}
           iconBg="bg-rose-100 text-rose-600"
@@ -84,7 +85,7 @@ const Dashboard: React.FC = () => {
             <div>
               <p className="text-amber-900 font-bold mb-1 italic">نکته مدیریتی:</p>
               <p className="text-amber-800 text-sm leading-relaxed">
-                میزان سود از هر مسافر عمره به طور میانگین ۱۲٪ بیشتر از حج است. تمرکز بر پکیج‌های عمره می‌تواند سودآوری را افزایش دهد.
+                میزان سود از هر مسافر عمره به طور میانگین 12% بیشتر از حج است. تمرکز بر پکیج‌های عمره می‌تواند سودآوری را افزایش دهد.
               </p>
             </div>
           </div>

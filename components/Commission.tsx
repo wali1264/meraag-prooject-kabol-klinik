@@ -22,6 +22,8 @@ import {
   CreditCard
 } from 'lucide-react';
 
+const SAR_RATE = 3.75;
+
 interface CommissionAgent {
   id: string;
   name: string;
@@ -48,30 +50,30 @@ const Commission: React.FC = () => {
       id: '1',
       name: 'شریف الله همدرد',
       code: 'AGN-101',
-      phone: '۰۷۷۲۲۳۳۴۴۵',
-      totalCommissions: '۴۵,۰۰۰',
-      paidAmount: '۳۰,۰۰۰',
-      pendingAmount: '۱۵,۰۰۰',
+      phone: '0772233445',
+      totalCommissions: '450',
+      paidAmount: '300',
+      pendingAmount: '150',
       status: 'فعال'
     },
     {
       id: '2',
       name: 'نوراحمد منصوری',
       code: 'AGN-102',
-      phone: '۰۷۸۸۹۹۰۰۱۱',
-      totalCommissions: '۱۲,۴۰۰',
-      paidAmount: '۱۲,۴۰۰',
-      pendingAmount: '۰',
+      phone: '0788990011',
+      totalCommissions: '120',
+      paidAmount: '120',
+      pendingAmount: '0',
       status: 'فعال'
     },
     {
       id: '3',
       name: 'عبدالکریم رحیمی',
       code: 'AGN-103',
-      phone: '۰۷۰۰۱۲۳۴۵۶',
-      totalCommissions: '۸,۵۰۰',
-      paidAmount: '۰',
-      pendingAmount: '۸,۵۰۰',
+      phone: '0700123456',
+      totalCommissions: '85',
+      paidAmount: '0',
+      pendingAmount: '85',
       status: 'غیرفعال'
     }
   ]);
@@ -129,19 +131,9 @@ const Commission: React.FC = () => {
     setOpenMenuId(null);
   };
 
-  const parsePersianNumber = (str: string) => {
-    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
-    const englishDigits = '0123456789';
-    let res = str.replace(/,/g, '');
-    for (let i = 0; i < 10; i++) {
-      res = res.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
-    }
-    return Number(res) || 0;
-  };
-
-  const toPersianDigits = (num: number | string) => {
-    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
-    return num.toString().replace(/\d/g, x => persianDigits[x]);
+  const formatWithSAR = (usdVal: string | number) => {
+    const usd = typeof usdVal === 'string' ? parseFloat(usdVal.replace(/,/g, '')) || 0 : usdVal;
+    return (usd * SAR_RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const handlePaymentSubmit = (e: React.FormEvent) => {
@@ -153,15 +145,15 @@ const Commission: React.FC = () => {
 
     setAgents(prev => prev.map(a => {
       if (a.id === payingAgent.id) {
-        const currentPaid = parsePersianNumber(a.paidAmount);
-        const currentTotal = parsePersianNumber(a.totalCommissions);
+        const currentPaid = parseFloat(a.paidAmount.replace(/,/g, '')) || 0;
+        const currentTotal = parseFloat(a.totalCommissions.replace(/,/g, '')) || 0;
         const newPaid = currentPaid + amountToPay;
         const newPending = Math.max(0, currentTotal - newPaid);
 
         return {
           ...a,
-          paidAmount: toPersianDigits(newPaid.toLocaleString()),
-          pendingAmount: toPersianDigits(newPending.toLocaleString())
+          paidAmount: newPaid.toLocaleString('en-US'),
+          pendingAmount: newPending.toLocaleString('en-US')
         };
       }
       return a;
@@ -181,8 +173,8 @@ const Commission: React.FC = () => {
               name: formData.name, 
               phone: formData.phone, 
               code: formData.code,
-              totalCommissions: toPersianDigits(Number(formData.initialCommission).toLocaleString()),
-              pendingAmount: toPersianDigits((Number(formData.initialCommission) - parsePersianNumber(a.paidAmount)).toLocaleString())
+              totalCommissions: Number(formData.initialCommission).toLocaleString('en-US'),
+              pendingAmount: (Number(formData.initialCommission) - (parseFloat(a.paidAmount.replace(/,/g, '')) || 0)).toLocaleString('en-US')
             } 
           : a
       ));
@@ -192,9 +184,9 @@ const Commission: React.FC = () => {
         name: formData.name,
         code: formData.code || `AGN-${Math.floor(Math.random() * 900) + 100}`,
         phone: formData.phone,
-        totalCommissions: toPersianDigits(Number(formData.initialCommission).toLocaleString()),
-        paidAmount: '۰',
-        pendingAmount: toPersianDigits(Number(formData.initialCommission).toLocaleString()),
+        totalCommissions: Number(formData.initialCommission).toLocaleString('en-US'),
+        paidAmount: '0',
+        pendingAmount: Number(formData.initialCommission).toLocaleString('en-US'),
         status: 'فعال'
       };
       setAgents([newAgent, ...agents]);
@@ -216,9 +208,9 @@ const Commission: React.FC = () => {
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="text-right">
           <h2 className="text-3xl font-black text-slate-800">مدیریت کمیشن‌کاران</h2>
-          <p className="text-slate-500 mt-1 font-medium">پیگیری همکاری‌ها، محاسبه و تصفیه کمیشن‌ها</p>
+          <p className="text-slate-500 mt-1 font-medium">پیگیری همکاری‌ها، محاسبه و تصفیه کمیشن‌ها (USD/SAR)</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -231,7 +223,7 @@ const Commission: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
+        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4 text-right">
           <div className="flex items-center justify-between">
             <span className="text-slate-400 font-bold text-sm">کل همکاران</span>
             <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
@@ -239,33 +231,33 @@ const Commission: React.FC = () => {
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-slate-800">{toPersianDigits(agents.length)} نفر</h3>
+            <h3 className="text-3xl font-black text-slate-800">{agents.length} نفر</h3>
             <p className="text-xs text-slate-400 font-bold">همکاران فعال و غیرفعال</p>
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
+        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4 text-right">
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 font-bold text-sm">مجموع کمیشن‌ها</span>
+            <span className="text-slate-400 font-bold text-sm">مجموع کمیشن‌ها ($)</span>
             <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
               <TrendingUp size={24} />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-slate-800 text-blue-600">۶۵,۹۰۰</h3>
-            <p className="text-xs text-slate-400 font-bold">AFN (کل تاریخچه)</p>
+            <h3 className="text-3xl font-black text-blue-600">655 $</h3>
+            <p className="text-xs text-slate-400 font-bold">≈ {formatWithSAR(655)} SAR</p>
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
+        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4 text-right">
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 font-bold text-sm">قابل پرداخت</span>
+            <span className="text-slate-400 font-bold text-sm">قابل پرداخت ($)</span>
             <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center">
               <ArrowUpRight size={24} />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-slate-800 text-amber-600">۲۳,۵۰۰</h3>
+            <h3 className="text-3xl font-black text-amber-600">235 $</h3>
             <p className="text-xs text-slate-400 font-bold">در انتظار تصفیه</p>
           </div>
         </div>
@@ -273,7 +265,7 @@ const Commission: React.FC = () => {
 
       {/* Controls */}
       <div className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
+        <div className="relative flex-1 w-full text-right">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input 
             type="text" 
@@ -290,16 +282,16 @@ const Commission: React.FC = () => {
       </div>
 
       {/* Agents Table */}
-      <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-visible">
+      <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-visible text-right">
         <div className="overflow-x-auto overflow-y-visible">
           <table className="w-full text-right border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-8 py-5 text-sm font-black text-slate-500">مشخصات همکار</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">شماره تماس</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">مجموع کمیشن</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">پرداخت شده</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">باقیمانده</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">مجموع کمیشن ($)</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">پرداخت شده ($)</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">باقیمانده ($)</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">وضعیت</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500 text-center">عملیات</th>
               </tr>
@@ -312,7 +304,7 @@ const Commission: React.FC = () => {
                       <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-black text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
                         {agent.name.charAt(0)}
                       </div>
-                      <div>
+                      <div className="text-right">
                         <span className="block font-black text-slate-800">{agent.name}</span>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{agent.code}</span>
                       </div>
@@ -325,14 +317,17 @@ const Commission: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-sm font-black text-slate-700">{agent.totalCommissions}</span>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-black text-slate-700">{agent.totalCommissions} $</span>
+                        <span className="text-[10px] font-bold text-slate-300">≈ {formatWithSAR(agent.totalCommissions)} SAR</span>
+                    </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-sm font-bold text-emerald-600">{agent.paidAmount}</span>
+                    <span className="text-sm font-bold text-emerald-600">{agent.paidAmount} $</span>
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`text-sm font-black ${agent.pendingAmount !== '۰' ? 'text-amber-600' : 'text-slate-300'}`}>
-                      {agent.pendingAmount}
+                    <span className={`text-sm font-black ${agent.pendingAmount !== '0' ? 'text-amber-600' : 'text-slate-300'}`}>
+                      {agent.pendingAmount} $
                     </span>
                   </td>
                   <td className="px-8 py-6">
@@ -414,9 +409,9 @@ const Commission: React.FC = () => {
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-8 space-y-5">
+            <form onSubmit={handleSubmit} className="p-8 space-y-5 text-right" dir="rtl">
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-400 block text-right">نام و تخلص کامل</label>
+                <label className="text-xs font-black text-slate-400 block text-right px-1">نام و تخلص کامل</label>
                 <input 
                   required
                   name="name"
@@ -429,18 +424,18 @@ const Commission: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-400 block text-right">شماره تماس</label>
+                  <label className="text-xs font-black text-slate-400 block text-right px-1">شماره تماس</label>
                   <input 
                     required
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    placeholder="۰۷XXXXXXXX"
+                    placeholder="07XXXXXXXX"
                     className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-bold"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-400 block text-right">کد اختصاصی (اختیاری)</label>
+                  <label className="text-xs font-black text-slate-400 block text-right px-1">کد اختصاصی (اختیاری)</label>
                   <input 
                     name="code"
                     value={formData.code}
@@ -452,7 +447,7 @@ const Commission: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-400 block text-right">کمیشن اولیه / مانده (AFN)</label>
+                <label className="text-xs font-black text-slate-400 block text-right px-1">کمیشن اولیه / مانده (USD $)</label>
                 <div className="relative">
                   <input 
                     required
@@ -460,9 +455,9 @@ const Commission: React.FC = () => {
                     type="number"
                     value={formData.initialCommission}
                     onChange={handleInputChange}
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-black text-2xl text-emerald-600"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-black text-2xl text-emerald-600 text-center"
                   />
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">AFN</span>
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">$</span>
                 </div>
               </div>
 
@@ -498,24 +493,24 @@ const Commission: React.FC = () => {
               </button>
             </div>
             
-            <form onSubmit={handlePaymentSubmit} className="p-8 space-y-6">
+            <form onSubmit={handlePaymentSubmit} className="p-8 space-y-6 text-right" dir="rtl">
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-xs font-bold text-slate-400 mb-2">همکار:</p>
                 <p className="text-lg font-black text-slate-800">{payingAgent.name}</p>
                 <div className="flex justify-between mt-3 pt-3 border-t border-slate-200/50">
-                  <div>
+                  <div className="text-right">
                     <p className="text-[10px] font-bold text-slate-400">کل طلب:</p>
-                    <p className="text-sm font-black text-slate-600">{payingAgent.totalCommissions}</p>
+                    <p className="text-sm font-black text-slate-600">{payingAgent.totalCommissions} $</p>
                   </div>
                   <div className="text-left">
                     <p className="text-[10px] font-bold text-slate-400">باقیمانده فعلی:</p>
-                    <p className="text-sm font-black text-amber-600">{payingAgent.pendingAmount}</p>
+                    <p className="text-sm font-black text-amber-600">{payingAgent.pendingAmount} $</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-400 block text-right">مبلغ پرداختی جدید (AFN)</label>
+                <label className="text-xs font-black text-slate-400 block text-right px-1">مبلغ پرداختی جدید ($)</label>
                 <div className="relative">
                   <input 
                     required
@@ -523,10 +518,10 @@ const Commission: React.FC = () => {
                     autoFocus
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
-                    placeholder="۰"
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-black text-2xl text-emerald-600"
+                    placeholder="0"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-black text-2xl text-emerald-600 text-center"
                   />
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">AFN</span>
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">$</span>
                 </div>
               </div>
 

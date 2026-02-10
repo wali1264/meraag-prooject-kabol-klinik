@@ -18,6 +18,8 @@ import {
   RotateCcw
 } from 'lucide-react';
 
+const SAR_RATE = 3.75;
+
 interface Receipt {
   id: string;
   receiptNo: string;
@@ -39,30 +41,30 @@ const History: React.FC = () => {
       id: '1',
       receiptNo: 'REC-2024-001',
       travelerName: 'احمد رحمانی',
-      amount: '۷۰,۰۰۰',
+      amount: '1,200',
       paymentType: 'نقد',
       service: 'عمره',
-      date: '۱۴۰۳/۰۳/۱۲',
+      date: '1403/03/12',
       status: 'معتبر'
     },
     {
       id: '2',
       receiptNo: 'REC-2024-002',
       travelerName: 'مریم کریمی',
-      amount: '۱۲۰,۰۰۰',
+      amount: '3,500',
       paymentType: 'حواله',
       service: 'حج',
-      date: '۱۴۰۳/۰۳/۱۴',
+      date: '1403/03/14',
       status: 'معتبر'
     },
     {
       id: '3',
       receiptNo: 'REC-2024-003',
       travelerName: 'محمد ادریس ناصری',
-      amount: '۱۵,۰۰۰',
+      amount: '400',
       paymentType: 'نقد',
       service: 'ویزه',
-      date: '۱۴۰۳/۰۳/۱۵',
+      date: '1403/03/15',
       status: 'باطل شده'
     }
   ]);
@@ -76,6 +78,11 @@ const History: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const formatWithSAR = (usdVal: string) => {
+    const usd = parseFloat(usdVal.replace(/,/g, '')) || 0;
+    return (usd * SAR_RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   const voidReceipt = (id: string) => {
     setReceipts(prev => prev.map(r => 
@@ -96,9 +103,9 @@ const History: React.FC = () => {
           <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-sm">
             <Clock size={32} />
           </div>
-          <div>
+          <div className="text-right">
             <h2 className="text-3xl font-black text-slate-800">تاریخچه رسیدها</h2>
-            <p className="text-slate-500 mt-1 font-medium">مشاهده و مدیریت تمام رسیدهای نقدی و غیرنقدی صادره</p>
+            <p className="text-slate-500 mt-1 font-medium">مشاهده و مدیریت تمام رسیدهای نقدی و غیرنقدی صادره (USD/SAR)</p>
           </div>
         </div>
         
@@ -111,28 +118,28 @@ const History: React.FC = () => {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-right" dir="rtl">
         <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-2">
           <span className="text-slate-400 text-xs font-bold">کل رسیدهای صادره</span>
-          <span className="text-2xl font-black text-slate-800">۱۲۴ عدد</span>
+          <span className="text-2xl font-black text-slate-800">124 عدد</span>
         </div>
         <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-2">
-          <span className="text-slate-400 text-xs font-bold">مجموع مبالغ دریافتی</span>
-          <span className="text-2xl font-black text-emerald-600">۸۵۰,۰۰۰ AFN</span>
+          <span className="text-slate-400 text-xs font-bold">مجموع مبالغ دریافتی ($)</span>
+          <span className="text-2xl font-black text-emerald-600">15,600 $</span>
         </div>
         <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-2">
           <span className="text-slate-400 text-xs font-bold">رسیدهای باطل شده</span>
-          <span className="text-2xl font-black text-rose-500">۸ مورد</span>
+          <span className="text-2xl font-black text-rose-500">8 مورد</span>
         </div>
         <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-2">
-          <span className="text-slate-400 text-xs font-bold">میانگین هر رسید</span>
-          <span className="text-2xl font-black text-blue-600">۶,۸۵۰ AFN</span>
+          <span className="text-slate-400 text-xs font-bold">میانگین هر رسید ($)</span>
+          <span className="text-2xl font-black text-blue-600">125 $</span>
         </div>
       </div>
 
       {/* Search & Filters */}
       <div className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
+        <div className="relative flex-1 w-full text-right">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input 
             type="text" 
@@ -154,7 +161,7 @@ const History: React.FC = () => {
       </div>
 
       {/* Receipts Table */}
-      <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-visible">
+      <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-visible text-right">
         <div className="overflow-x-auto overflow-y-visible">
           <table className="w-full text-right border-collapse">
             <thead>
@@ -162,7 +169,7 @@ const History: React.FC = () => {
                 <th className="px-8 py-5 text-sm font-black text-slate-500">شماره رسید</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">مشخصات پرداخت کننده</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">نوع خدمت</th>
-                <th className="px-8 py-5 text-sm font-black text-slate-500">مبلغ (AFN)</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-500">مبلغ ($)</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">روش پرداخت</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">تاریخ ثبت</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">وضعیت</th>
@@ -192,7 +199,10 @@ const History: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-lg font-black text-slate-800">{receipt.amount}</span>
+                    <div className="flex flex-col">
+                        <span className="text-lg font-black text-slate-800">{receipt.amount} $</span>
+                        <span className="text-[10px] font-bold text-slate-400">≈ {formatWithSAR(receipt.amount)} SAR</span>
+                    </div>
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2 text-slate-500">

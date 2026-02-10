@@ -7,7 +7,7 @@ const TravelStats: React.FC = () => {
       <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-slate-700 shadow-sm border border-slate-200">
-            ۱
+            1
           </div>
           <span className="font-medium text-slate-700">تعداد حجاج</span>
         </div>
@@ -19,7 +19,7 @@ const TravelStats: React.FC = () => {
       <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-slate-700 shadow-sm border border-slate-200">
-            ۱
+            1
           </div>
           <span className="font-medium text-slate-700">تعداد عمره‌کاران</span>
         </div>
@@ -31,8 +31,8 @@ const TravelStats: React.FC = () => {
       {/* Visual representation of split */}
       <div className="pt-4">
         <div className="flex justify-between text-xs text-slate-400 mb-2">
-          <span>حج (۵۰٪)</span>
-          <span>عمره (۵۰٪)</span>
+          <span>حج (50%)</span>
+          <span>عمره (50%)</span>
         </div>
         <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
           <div className="h-full bg-emerald-500 w-1/2"></div>

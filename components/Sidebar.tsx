@@ -10,7 +10,9 @@ import {
   Settings, 
   BarChart3,
   UserCheck,
-  Building
+  Building,
+  Book,
+  Coins
 } from 'lucide-react';
 import { MenuItem } from '../types';
 
@@ -23,6 +25,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'داشبورد', icon: <LayoutDashboard size={20} /> },
     { id: 'travelers', label: 'مسافران', icon: <Users size={20} /> },
+    { id: 'ledger', label: 'دفتر کل (حسابداری)', icon: <Book size={20} /> },
+    { id: 'cashbox', label: 'صندوق نقد', icon: <Coins size={20} /> },
     { id: 'arabic-companies', label: 'شرکت‌های عربی', icon: <Building size={20} /> },
     { id: 'services', label: 'خدمات و پکیج‌ها', icon: <Package size={20} /> },
     { id: 'accounts', label: 'حسابات و بیلانس', icon: <Wallet size={20} /> },

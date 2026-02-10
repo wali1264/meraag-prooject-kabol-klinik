@@ -14,26 +14,20 @@ import {
   Save,
   MapPin,
   Building2,
-  Ticket,
   Check,
-  RotateCcw,
   Edit,
   Trash2,
   Printer,
-  FileText,
   BookOpen,
-  ArrowUpRight,
-  ArrowDownLeft,
-  DollarSign,
-  Download,
   Eye,
-  Info,
   Clock,
   ShieldCheck,
   Bed,
   Car,
   User,
-  Utensils
+  Download,
+  Info,
+  Users2
 } from 'lucide-react';
 import { ArabicCompany } from './ArabicCompanies';
 
@@ -61,6 +55,7 @@ interface Traveler {
   tripDate: string;
   saudiRepresentative: string;
   representativeFee: string;
+  familyCount: string;
   specialType: string;
   specialCost: string;
   flightRoute: string;
@@ -80,9 +75,6 @@ interface Traveler {
   transportType: string;
   transportPurchase: string;
   transportSelling: string;
-  foodCompany: string;
-  foodPurchase: string;
-  foodSelling: string;
   totalReceived: string;
   totalPayable: string;
   ledger: LedgerEntry[];
@@ -125,7 +117,8 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
     tripDate: '1403/05/20',
     saudiRepresentative: '',
     representativeFee: '',
-    specialType: 'سعودی',
+    familyCount: '1',
+    specialType: 'ویزه بی خدمات',
     specialCost: '',
     flightRoute: 'کابل-جده',
     flightPurchase: '',
@@ -144,17 +137,14 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
     transportType: 'بس (حافلة)',
     transportPurchase: '',
     transportSelling: '',
-    foodCompany: '',
-    foodPurchase: '',
-    foodSelling: '',
     totalReceived: '',
     totalPayable: ''
   });
 
   const formatWithSAR = (usdVal: string | number) => {
     const usd = typeof usdVal === 'string' ? parseFloat(usdVal.replace(/,/g, '')) || 0 : usdVal;
-    const sar = (usd * SAR_RATE).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return { usd: usd.toLocaleString(), sar };
+    const sar = (usd * SAR_RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return { usd: usd.toLocaleString('en-US'), sar };
   };
 
   // Automatic Calculation for Total Payable
@@ -165,22 +155,28 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
     };
     
     const sCost = parse(formData.specialCost);
-    const fSelling = parse(formData.flightSelling);
-    const hNights = parse(formData.hotelNights);
-    const hSelling = parse(formData.hotelSelling);
-    const hmNights = parse(formData.hotelMakkahNights);
-    const hmSelling = parse(formData.hotelMakkahSelling);
-    const tSelling = parse(formData.transportSelling);
     const rFee = parse(formData.representativeFee);
-    const foodSell = parse(formData.foodSelling);
+    
+    let calculatedTotal = sCost + rFee;
 
-    const calculatedTotal = sCost + fSelling + (hNights * hSelling) + (hmNights * hmSelling) + tSelling + rFee + foodSell;
-    const formattedTotal = calculatedTotal > 0 ? calculatedTotal.toLocaleString() : '';
+    // Only add other costs if "With Services" is selected
+    if (formData.specialType === 'ویزه با خدمات') {
+        const fSelling = parse(formData.flightSelling);
+        const hNights = parse(formData.hotelNights);
+        const hSelling = parse(formData.hotelSelling);
+        const hmNights = parse(formData.hotelMakkahNights);
+        const hmSelling = parse(formData.hotelMakkahSelling);
+        const tSelling = parse(formData.transportSelling);
+        calculatedTotal += fSelling + (hNights * hSelling) + (hmNights * hmSelling) + tSelling;
+    }
+
+    const formattedTotal = calculatedTotal > 0 ? calculatedTotal.toLocaleString('en-US') : '';
     
     if (formData.totalPayable !== formattedTotal) {
       setFormData(prev => ({ ...prev, totalPayable: formattedTotal }));
     }
   }, [
+    formData.specialType,
     formData.specialCost, 
     formData.flightSelling, 
     formData.hotelNights, 
@@ -188,8 +184,7 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
     formData.hotelMakkahNights, 
     formData.hotelMakkahSelling,
     formData.transportSelling,
-    formData.representativeFee,
-    formData.foodSelling
+    formData.representativeFee
   ]);
 
   const [ledgerFormData, setLedgerFormData] = useState({
@@ -238,6 +233,7 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
       tripDate: traveler.tripDate,
       saudiRepresentative: traveler.saudiRepresentative || '',
       representativeFee: traveler.representativeFee || '',
+      familyCount: traveler.familyCount || '1',
       specialType: traveler.specialType,
       specialCost: traveler.specialCost,
       flightRoute: traveler.flightRoute,
@@ -257,9 +253,6 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
       transportType: traveler.transportType || 'بس (حافلة)',
       transportPurchase: traveler.transportPurchase || '',
       transportSelling: traveler.transportSelling || '',
-      foodCompany: traveler.foodCompany || '',
-      foodPurchase: traveler.foodPurchase || '',
-      foodSelling: traveler.foodSelling || '',
       totalReceived: traveler.totalReceived,
       totalPayable: traveler.totalPayable
     });
@@ -283,7 +276,7 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
     e.preventDefault();
     const received = parseFloat(formData.totalReceived.replace(/,/g, '')) || 0;
     const travelerName = `${formData.firstName} ${formData.lastName}`.trim();
-    const currentDate = new Intl.DateTimeFormat('fa-AF').format(new Date());
+    const currentDate = new Intl.DateTimeFormat('fa-AF', { numberingSystem: 'latn' }).format(new Date());
     const parseVal = (v: string) => parseFloat(v.toString().replace(/,/g, '')) || 0;
 
     if (editingTravelerId) {
@@ -311,56 +304,48 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
         });
       }
 
-      if (parseVal(formData.flightSelling) > 0) {
-        initialLedger.push({
-          id: `${timestamp}-flight`,
-          date: currentDate,
-          description: `فروش تکت (${formData.flightRoute})`,
-          debit: parseVal(formData.flightSelling),
-          credit: 0
-        });
-      }
+      if (formData.specialType === 'ویزه با خدمات') {
+          if (parseVal(formData.flightSelling) > 0) {
+            initialLedger.push({
+              id: `${timestamp}-flight`,
+              date: currentDate,
+              description: `فروش تکت (${formData.flightRoute})`,
+              debit: parseVal(formData.flightSelling),
+              credit: 0
+            });
+          }
 
-      const madinahTotal = parseVal(formData.hotelSelling) * (parseFloat(formData.hotelNights) || 1);
-      if (madinahTotal > 0) {
-        initialLedger.push({
-          id: `${timestamp}-hotel-madinah`,
-          date: currentDate,
-          description: `فروش هوتل مدینه (${formData.hotelName} - ${formData.hotelNights} شب)`,
-          debit: madinahTotal,
-          credit: 0
-        });
-      }
+          const madinahTotal = parseVal(formData.hotelSelling) * (parseFloat(formData.hotelNights) || 1);
+          if (madinahTotal > 0) {
+            initialLedger.push({
+              id: `${timestamp}-hotel-madinah`,
+              date: currentDate,
+              description: `فروش هوتل مدینه (${formData.hotelName} - ${formData.hotelNights} شب)`,
+              debit: madinahTotal,
+              credit: 0
+            });
+          }
 
-      const makkahTotal = parseVal(formData.hotelMakkahSelling) * (parseFloat(formData.hotelMakkahNights) || 1);
-      if (makkahTotal > 0) {
-        initialLedger.push({
-          id: `${timestamp}-hotel-makkah`,
-          date: currentDate,
-          description: `فروش هوتل مکه (${formData.hotelMakkahName} - ${formData.hotelMakkahNights} شب)`,
-          debit: makkahTotal,
-          credit: 0
-        });
-      }
+          const makkahTotal = parseVal(formData.hotelMakkahSelling) * (parseFloat(formData.hotelMakkahNights) || 1);
+          if (makkahTotal > 0) {
+            initialLedger.push({
+              id: `${timestamp}-hotel-makkah`,
+              date: currentDate,
+              description: `فروش هوتل مکه (${formData.hotelMakkahName} - ${formData.hotelMakkahNights} شب)`,
+              debit: makkahTotal,
+              credit: 0
+            });
+          }
 
-      if (parseVal(formData.transportSelling) > 0) {
-        initialLedger.push({
-          id: `${timestamp}-transport`,
-          date: currentDate,
-          description: `فروش ترانسپورت (${formData.transportType})`,
-          debit: parseVal(formData.transportSelling),
-          credit: 0
-        });
-      }
-
-      if (parseVal(formData.foodSelling) > 0) {
-        initialLedger.push({
-          id: `${timestamp}-food-sale`,
-          date: currentDate,
-          description: `هزینه خدمات غذا${formData.foodCompany ? ` (${formData.foodCompany})` : ''}`,
-          debit: parseVal(formData.foodSelling),
-          credit: 0
-        });
+          if (parseVal(formData.transportSelling) > 0) {
+            initialLedger.push({
+              id: `${timestamp}-transport`,
+              date: currentDate,
+              description: `فروش ترانسپورت (${formData.transportType})`,
+              debit: parseVal(formData.transportSelling),
+              credit: 0
+            });
+          }
       }
 
       if (parseVal(formData.representativeFee) > 0) {
@@ -400,95 +385,74 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
       const madinahPurchase = parsePurchase(formData.hotelPurchase, formData.hotelNights);
       const makkahPurchase = parsePurchase(formData.hotelMakkahPurchase, formData.hotelMakkahNights);
       const transportPurchase = parsePurchase(formData.transportPurchase);
-      const foodPurchaseAmount = parseVal(formData.foodPurchase);
       const representativeFee = parseVal(formData.representativeFee);
 
-      if (formData.hotelName && madinahPurchase > 0) {
-        updatedCompanies = updatedCompanies.map(c => {
-          if (c.name === formData.hotelName) {
-            return {
-              ...c,
-              balance: c.balance + madinahPurchase,
-              ledger: [
-                ...c.ledger,
-                {
-                  id: Date.now().toString() + '-madinah-debit',
-                  date: currentDate,
-                  description: `رزرو هوتل مدینه برای مسافر: ${travelerName}`,
-                  debit: madinahPurchase,
-                  credit: 0
-                }
-              ]
-            };
+      if (formData.specialType === 'ویزه با خدمات') {
+          if (formData.hotelName && madinahPurchase > 0) {
+            updatedCompanies = updatedCompanies.map(c => {
+              if (c.name === formData.hotelName) {
+                return {
+                  ...c,
+                  balance: c.balance + madinahPurchase,
+                  ledger: [
+                    ...c.ledger,
+                    {
+                      id: Date.now().toString() + '-madinah-debit',
+                      date: currentDate,
+                      description: `رزرو هوتل مدینه برای مسافر: ${travelerName}`,
+                      debit: madinahPurchase,
+                      credit: 0
+                    }
+                  ]
+                };
+              }
+              return c;
+            });
           }
-          return c;
-        });
-      }
 
-      if (formData.hotelMakkahName && makkahPurchase > 0) {
-        updatedCompanies = updatedCompanies.map(c => {
-          if (c.name === formData.hotelMakkahName) {
-            return {
-              ...c,
-              balance: c.balance + makkahPurchase,
-              ledger: [
-                ...c.ledger,
-                {
-                  id: Date.now().toString() + '-makkah-debit',
-                  date: currentDate,
-                  description: `رزرو هوتل مکه برای مسافر: ${travelerName}`,
-                  debit: makkahPurchase,
-                  credit: 0
-                }
-              ]
-            };
+          if (formData.hotelMakkahName && makkahPurchase > 0) {
+            updatedCompanies = updatedCompanies.map(c => {
+              if (c.name === formData.hotelMakkahName) {
+                return {
+                  ...c,
+                  balance: c.balance + makkahPurchase,
+                  ledger: [
+                    ...c.ledger,
+                    {
+                      id: Date.now().toString() + '-makkah-debit',
+                      date: currentDate,
+                      description: `رزرو هوتل مکه برای مسافر: ${travelerName}`,
+                      debit: makkahPurchase,
+                      credit: 0
+                    }
+                  ]
+                };
+              }
+              return c;
+            });
           }
-          return c;
-        });
-      }
 
-      if (formData.transportCompany && transportPurchase > 0) {
-        updatedCompanies = updatedCompanies.map(c => {
-          if (c.name === formData.transportCompany) {
-            return {
-              ...c,
-              balance: c.balance + transportPurchase,
-              ledger: [
-                ...c.ledger,
-                {
-                  id: Date.now().toString() + '-trans-debit',
-                  date: currentDate,
-                  description: `خدمات ترانسپورت (${formData.transportType}) برای مسافر: ${travelerName}`,
-                  debit: transportPurchase,
-                  credit: 0
-                }
-              ]
-            };
+          if (formData.transportCompany && transportPurchase > 0) {
+            updatedCompanies = updatedCompanies.map(c => {
+              if (c.name === formData.transportCompany) {
+                return {
+                  ...c,
+                  balance: c.balance + transportPurchase,
+                  ledger: [
+                    ...c.ledger,
+                    {
+                      id: Date.now().toString() + '-trans-debit',
+                      date: currentDate,
+                      description: `خدمات ترانسپورت (${formData.transportType}) برای مسافر: ${travelerName}`,
+                      debit: transportPurchase,
+                      credit: 0
+                    }
+                  ]
+                };
+              }
+              return c;
+            });
           }
-          return c;
-        });
-      }
-
-      if (formData.foodCompany && foodPurchaseAmount > 0) {
-        updatedCompanies = updatedCompanies.map(c => {
-          if (c.name === formData.foodCompany) {
-            return {
-              ...c,
-              balance: c.balance + foodPurchaseAmount,
-              ledger: [
-                ...c.ledger,
-                {
-                  id: Date.now().toString() + '-food-purchase-debit',
-                  date: currentDate,
-                  description: `هزینه خدمات غذا برای مسافر: ${travelerName}`,
-                  debit: foodPurchaseAmount,
-                  credit: 0
-                }
-              ]
-            };
-          }
-          return c;
-        });
       }
 
       if (formData.saudiRepresentative && representativeFee > 0) {
@@ -524,7 +488,7 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
 
     const newEntry: LedgerEntry = {
       id: Date.now().toString(),
-      date: new Intl.DateTimeFormat('fa-AF').format(new Date()),
+      date: new Intl.DateTimeFormat('fa-AF', { numberingSystem: 'latn' }).format(new Date()),
       description: ledgerFormData.description,
       debit: parseFloat(ledgerFormData.debit) || 0,
       credit: parseFloat(ledgerFormData.credit) || 0,
@@ -548,11 +512,10 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
     setEditingTravelerId(null);
     setFormData({
       firstName: '', lastName: '', passport: '', phone: '', tripType: 'حج', tripDate: '1403/05/20',
-      saudiRepresentative: '', representativeFee: '', specialType: 'سعودی', specialCost: '', flightRoute: 'کابل-جده', flightPurchase: '',
+      saudiRepresentative: '', representativeFee: '', familyCount: '1', specialType: 'ویزه بی خدمات', specialCost: '', flightRoute: 'کابل-جده', flightPurchase: '',
       flightSelling: '', hotelName: '', hotelNights: '', hotelRoomType: 'دو نفره', hotelPurchase: '', hotelSelling: '', 
       hotelMakkahName: '', hotelMakkahNights: '', hotelMakkahRoomType: 'دو نفره', hotelMakkahPurchase: '', hotelMakkahSelling: '',
       transportCompany: '', transportType: 'بس (حافلة)', transportPurchase: '', transportSelling: '',
-      foodCompany: '', foodPurchase: '', foodSelling: '',
       totalReceived: '', totalPayable: ''
     });
   };
@@ -666,9 +629,9 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                     <td className="px-6 py-5">
                       <div className="flex flex-col">
                         <span className={`text-sm font-black ${balance > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
-                          {balance.toLocaleString()} $
+                          {balance.toLocaleString('en-US')} $
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400">≈ {(balance * SAR_RATE).toLocaleString()} SAR</span>
+                        <span className="text-[10px] font-bold text-slate-400">≈ {(balance * SAR_RATE).toLocaleString('en-US')} SAR</span>
                       </div>
                     </td>
                     <td className="px-6 py-5">
@@ -809,80 +772,80 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <DetailRow label="نوع سفر" value={selectedTravelerForDetails.tripType} icon={<Plane size={14}/>} />
                   <DetailRow label="تاریخ پرواز" value={selectedTravelerForDetails.tripDate} icon={<Calendar size={14}/>} />
-                  <DetailRow label="نماینده در عربستان" value={selectedTravelerForDetails.saudiRepresentative} icon={<User size={14}/>} />
-                  <DetailRow label="هزینه خدمات نماینده" value={selectedTravelerForDetails.representativeFee} isCurrency={true} />
                   <DetailRow label="تاریخ ثبت نام" value={selectedTravelerForDetails.date} icon={<Clock size={14}/>} />
+                  <DetailRow label="تعداد فامیل" value={selectedTravelerForDetails.familyCount} icon={<Users2 size={14}/>} />
                 </div>
               </div>
 
               <div>
                 <SectionHeader title="خدمات ویزه" />
                 <div className="grid grid-cols-2 gap-4 mt-4">
-                  <DetailRow label="نوع ویزه" value={selectedTravelerForDetails.specialType} icon={<ShieldCheck size={14}/>} />
+                  <DetailRow label="نوع خدمات" value={selectedTravelerForDetails.specialType} icon={<ShieldCheck size={14}/>} />
                   <DetailRow label="هزینه ویزه" value={selectedTravelerForDetails.specialCost} isCurrency={true} />
                 </div>
               </div>
 
-              <div>
-                <SectionHeader title="تکت هواپیما" />
-                <div className="grid grid-cols-1 gap-4 mt-4">
-                   <DetailRow label="مسیر پرواز" value={selectedTravelerForDetails.flightRoute} icon={<MapPin size={14}/>} />
-                   <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="قیمت خرید" value={selectedTravelerForDetails.flightPurchase} isCurrency={true} />
-                      <DetailRow label="قیمت فروش" value={selectedTravelerForDetails.flightSelling} isCurrency={true} />
-                   </div>
-                </div>
-              </div>
+              {selectedTravelerForDetails.specialType === 'ویزه با خدمات' && (
+                  <>
+                    <div>
+                      <SectionHeader title="تکت هواپیما" />
+                      <div className="grid grid-cols-1 gap-4 mt-4">
+                         <DetailRow label="مسیر پرواز" value={selectedTravelerForDetails.flightRoute} icon={<MapPin size={14}/>} />
+                         <div className="grid grid-cols-2 gap-4">
+                            <DetailRow label="قیمت خرید" value={selectedTravelerForDetails.flightPurchase} isCurrency={true} />
+                            <DetailRow label="قیمت فروش" value={selectedTravelerForDetails.flightSelling} isCurrency={true} />
+                         </div>
+                      </div>
+                    </div>
 
-              <div>
-                <SectionHeader title="هوتل (مدینه منوره)" />
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <DetailRow label="نام شرکت/هوتل" value={selectedTravelerForDetails.hotelName} icon={<Building2 size={14}/>} />
-                  <DetailRow label="نوع اتاق" value={selectedTravelerForDetails.hotelRoomType} icon={<Bed size={14}/>} />
-                  <DetailRow label="تعداد شب" value={selectedTravelerForDetails.hotelNights} />
-                  <DetailRow label="خرید هر شب" value={selectedTravelerForDetails.hotelPurchase} isCurrency={true} />
-                  <DetailRow label="فروش هر شب" value={selectedTravelerForDetails.hotelSelling} isCurrency={true} />
-                </div>
-              </div>
+                    <div>
+                      <SectionHeader title="هوتل (مدینه منوره)" />
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <DetailRow label="نام شرکت/هوتل" value={selectedTravelerForDetails.hotelName} icon={<Building2 size={14}/>} />
+                        <DetailRow label="نوع اتاق" value={selectedTravelerForDetails.hotelRoomType} icon={<Bed size={14}/>} />
+                        <DetailRow label="تعداد شب" value={selectedTravelerForDetails.hotelNights} />
+                        <DetailRow label="خرید هر شب" value={selectedTravelerForDetails.hotelPurchase} isCurrency={true} />
+                        <DetailRow label="فروش هر شب" value={selectedTravelerForDetails.hotelSelling} isCurrency={true} />
+                      </div>
+                    </div>
 
-              <div>
-                <SectionHeader title="هوتل (مکه مکرمه)" />
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <DetailRow label="نام شرکت/هوتل" value={selectedTravelerForDetails.hotelMakkahName} icon={<Building2 size={14}/>} />
-                  <DetailRow label="نوع اتاق" value={selectedTravelerForDetails.hotelMakkahRoomType} icon={<Bed size={14}/>} />
-                  <DetailRow label="تعداد شب" value={selectedTravelerForDetails.hotelMakkahNights} />
-                  <DetailRow label="خرید هر شب" value={selectedTravelerForDetails.hotelMakkahPurchase} isCurrency={true} />
-                  <DetailRow label="فروش هر شب" value={selectedTravelerForDetails.hotelMakkahSelling} isCurrency={true} />
-                </div>
-              </div>
+                    <div>
+                      <SectionHeader title="هوتل (مکه مکرمه)" />
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <DetailRow label="نام شرکت/هوتل" value={selectedTravelerForDetails.hotelMakkahName} icon={<Building2 size={14}/>} />
+                        <DetailRow label="نوع اتاق" value={selectedTravelerForDetails.hotelMakkahRoomType} icon={<Bed size={14}/>} />
+                        <DetailRow label="تعداد شب" value={selectedTravelerForDetails.hotelMakkahNights} />
+                        <DetailRow label="خرید هر شب" value={selectedTravelerForDetails.hotelMakkahPurchase} isCurrency={true} />
+                        <DetailRow label="فروش هر شب" value={selectedTravelerForDetails.hotelMakkahSelling} isCurrency={true} />
+                      </div>
+                    </div>
 
-              <div>
-                <SectionHeader title="ترانسپورت" />
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <DetailRow label="شرکت ترانسپورتی" value={selectedTravelerForDetails.transportCompany} icon={<Building2 size={14}/>} />
-                  <DetailRow label="نوع وسیله" value={selectedTravelerForDetails.transportType} icon={<Car size={14}/>} />
-                  <DetailRow label="قیمت خرید" value={selectedTravelerForDetails.transportPurchase} isCurrency={true} />
-                  <DetailRow label="قیمت فروش" value={selectedTravelerForDetails.transportSelling} isCurrency={true} />
-                </div>
-              </div>
+                    <div>
+                      <SectionHeader title="ترانسپورت" />
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <DetailRow label="شرکت ترانسپورتی" value={selectedTravelerForDetails.transportCompany} icon={<Building2 size={14}/>} />
+                        <DetailRow label="نوع وسیله" value={selectedTravelerForDetails.transportType} icon={<Car size={14}/>} />
+                        <DetailRow label="قیمت خرید" value={selectedTravelerForDetails.transportPurchase} isCurrency={true} />
+                        <DetailRow label="قیمت فروش" value={selectedTravelerForDetails.transportSelling} isCurrency={true} />
+                      </div>
+                    </div>
 
-              <div>
-                <SectionHeader title="غذا" />
-                <div className="grid grid-cols-1 gap-4 mt-4">
-                   <DetailRow label="شرکت همکار غذا" value={selectedTravelerForDetails.foodCompany} icon={<Building2 size={14}/>} />
-                   <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="قیمت خرید غذا" value={selectedTravelerForDetails.foodPurchase} icon={<Utensils size={14}/>} isCurrency={true} />
-                      <DetailRow label="قیمت فروش غذا" value={selectedTravelerForDetails.foodSelling} icon={<Utensils size={14}/>} isCurrency={true} />
-                   </div>
-                </div>
-              </div>
+                    <div>
+                      <SectionHeader title="نماینده در عربستان" />
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <DetailRow label="نماینده در عربستان" value={selectedTravelerForDetails.saudiRepresentative} icon={<User size={14}/>} />
+                        <DetailRow label="هزینه خدمات نماینده" value={selectedTravelerForDetails.representativeFee} isCurrency={true} />
+                      </div>
+                    </div>
+                  </>
+              )}
 
               <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex items-center justify-between">
                 <div>
                   <span className="text-xs font-bold text-emerald-500 block mb-1">مجموع حساب قابل پرداخت مشتری</span>
                   <div className="flex flex-col">
                     <span className="text-2xl font-black text-emerald-700">{selectedTravelerForDetails.totalPayable} $</span>
-                    <span className="text-[10px] font-bold text-emerald-500 uppercase">≈ {(parseFloat(selectedTravelerForDetails.totalPayable.replace(/,/g, '')) * SAR_RATE).toLocaleString()} SAR</span>
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase">≈ {(parseFloat(selectedTravelerForDetails.totalPayable.replace(/,/g, '')) * SAR_RATE).toLocaleString('en-US')} SAR</span>
                   </div>
                 </div>
                 <div className="text-left">
@@ -940,17 +903,17 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+            <div className="flex-1 overflow-y-auto p-8 space-y-8 text-right" dir="rtl">
               {/* Financial Quick Summary */}
               <div className="grid grid-cols-3 gap-6">
                 <div className="bg-rose-50 p-6 rounded-3xl border border-rose-100">
                   <span className="text-xs font-bold text-rose-400 block mb-1">مجموعه بدهی‌ها (برد)</span>
                   <div className="flex flex-col">
                     <span className="text-2xl font-black text-rose-600">
-                        {selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.debit, 0).toLocaleString()} $
+                        {selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.debit, 0).toLocaleString('en-US')} $
                     </span>
                     <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">
-                        ≈ {(selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.debit, 0) * SAR_RATE).toLocaleString()} SAR
+                        ≈ {(selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.debit, 0) * SAR_RATE).toLocaleString('en-US')} SAR
                     </span>
                   </div>
                 </div>
@@ -958,10 +921,10 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                   <span className="text-xs font-bold text-emerald-400 block mb-1">مجموع رسید (پرداختی)</span>
                   <div className="flex flex-col">
                     <span className="text-2xl font-black text-emerald-600">
-                        {selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.credit, 0).toLocaleString()} $
+                        {selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.credit, 0).toLocaleString('en-US')} $
                     </span>
                     <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
-                        ≈ {(selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.credit, 0) * SAR_RATE).toLocaleString()} SAR
+                        ≈ {(selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.credit, 0) * SAR_RATE).toLocaleString('en-US')} SAR
                     </span>
                   </div>
                 </div>
@@ -970,13 +933,55 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                   <div className="flex flex-col">
                     <span className="text-2xl font-black">
                       {(selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.debit, 0) - 
-                        selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.credit, 0)).toLocaleString()} $
+                        selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.credit, 0)).toLocaleString('en-US')} $
                     </span>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       ≈ {((selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.debit, 0) - 
-                        selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.credit, 0)) * SAR_RATE).toLocaleString()} SAR
+                        selectedTravelerForLedger.ledger.reduce((sum, e) => sum + e.credit, 0)) * SAR_RATE).toLocaleString('en-US')} SAR
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Package Services and Costs Breakdown */}
+              <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100">
+                <h4 className="text-sm font-black text-slate-700 mb-4 flex items-center gap-2">
+                  <Info size={18} className="text-indigo-500" />
+                  خلاصه خدمات و هزینه‌های پکیج مسافر
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white p-3 rounded-2xl border border-slate-100 flex flex-col">
+                    <span className="text-[10px] font-bold text-slate-400">ویزه ({selectedTravelerForLedger.specialType})</span>
+                    <span className="text-sm font-black text-slate-700">{selectedTravelerForLedger.specialCost || '0'} $</span>
+                  </div>
+                  
+                  {selectedTravelerForLedger.specialType === 'ویزه با خدمات' && (
+                    <>
+                      <div className="bg-white p-3 rounded-2xl border border-slate-100 flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400">تکت ({selectedTravelerForLedger.flightRoute})</span>
+                        <span className="text-sm font-black text-slate-700">{selectedTravelerForLedger.flightSelling || '0'} $</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-2xl border border-slate-100 flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400">هوتل مدینه ({selectedTravelerForLedger.hotelNights} شب)</span>
+                        <span className="text-sm font-black text-slate-700">{(parseFloat(selectedTravelerForLedger.hotelSelling) * parseFloat(selectedTravelerForLedger.hotelNights) || 0).toLocaleString('en-US')} $</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-2xl border border-slate-100 flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400">هوتل مکه ({selectedTravelerForLedger.hotelMakkahNights} شب)</span>
+                        <span className="text-sm font-black text-slate-700">{(parseFloat(selectedTravelerForLedger.hotelMakkahSelling) * parseFloat(selectedTravelerForLedger.hotelMakkahNights) || 0).toLocaleString('en-US')} $</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-2xl border border-slate-100 flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400">ترانسپورت ({selectedTravelerForLedger.transportType})</span>
+                        <span className="text-sm font-black text-slate-700">{selectedTravelerForLedger.transportSelling || '0'} $</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  {selectedTravelerForLedger.saudiRepresentative && (
+                    <div className="bg-white p-3 rounded-2xl border border-slate-100 flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400">خدمات نماینده ({selectedTravelerForLedger.saudiRepresentative})</span>
+                      <span className="text-sm font-black text-slate-700">{selectedTravelerForLedger.representativeFee || '0'} $</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1000,7 +1005,7 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                     name="debit" 
                     value={ledgerFormData.debit} 
                     onChange={handleLedgerInputChange}
-                    placeholder="۰"
+                    placeholder="0"
                     className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-black text-rose-600"
                   />
                 </div>
@@ -1011,7 +1016,7 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                     name="credit" 
                     value={ledgerFormData.credit} 
                     onChange={handleLedgerInputChange}
-                    placeholder="۰"
+                    placeholder="0"
                     className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-black text-emerald-600"
                   />
                 </div>
@@ -1028,7 +1033,7 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                       <th className="px-6 py-4 text-sm font-black text-slate-500">تاریخ</th>
                       <th className="px-6 py-4 text-sm font-black text-slate-500">شرح</th>
                       <th className="px-6 py-4 text-sm font-black text-rose-500">برد (USD)</th>
-                      <th className="px-6 py-4 text-sm font-black text-emerald-600">رسید (USD)</th>
+                      <th className="px-6 py-4 text-sm font-black text-emerald-600">ر سید (USD)</th>
                       <th className="px-6 py-4 text-sm font-black text-slate-800">مانده ($)</th>
                     </tr>
                   </thead>
@@ -1041,12 +1046,12 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                           <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
                             <td className="px-6 py-4 text-sm font-bold text-slate-400">{entry.date}</td>
                             <td className="px-6 py-4 font-bold text-slate-700">{entry.description}</td>
-                            <td className="px-6 py-4 font-black text-rose-500">{entry.debit > 0 ? entry.debit.toLocaleString() : '-'}</td>
-                            <td className="px-6 py-4 font-black text-emerald-600">{entry.credit > 0 ? entry.credit.toLocaleString() : '-'}</td>
+                            <td className="px-6 py-4 font-black text-rose-500">{entry.debit > 0 ? entry.debit.toLocaleString('en-US') : '-'}</td>
+                            <td className="px-6 py-4 font-black text-emerald-600">{entry.credit > 0 ? entry.credit.toLocaleString('en-US') : '-'}</td>
                             <td className="px-6 py-4 font-black">
                                 <div className="flex flex-col">
-                                    <span className={runningBalance > 0 ? 'text-rose-600' : 'text-emerald-600'}>{runningBalance.toLocaleString()} $</span>
-                                    <span className="text-[10px] text-slate-400">≈ {(runningBalance * SAR_RATE).toLocaleString()} SAR</span>
+                                    <span className={runningBalance > 0 ? 'text-rose-600' : 'text-emerald-600'}>{runningBalance.toLocaleString('en-US')} $</span>
+                                    <span className="text-[10px] text-slate-400">≈ {(runningBalance * SAR_RATE).toLocaleString('en-US')} SAR</span>
                                 </div>
                             </td>
                           </tr>
@@ -1129,177 +1134,175 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                   <label className="text-xs text-slate-400 block font-bold">تاریخ سفر</label>
                   <input name="tripDate" value={formData.tripDate} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-slate-400 block font-bold">انتخاب نماینده (شرکت همکار)</label>
-                  <select name="saudiRepresentative" value={formData.saudiRepresentative} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
-                    <option value="">انتخاب نماینده...</option>
-                    {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-slate-400 block font-bold">هزینه خدمات نماینده (USD $)</label>
-                  <input name="representativeFee" value={formData.representativeFee} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                </div>
               </div>
 
               <SectionHeader title="خدمات ویزه" />
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs text-slate-400 block font-bold">نوع ویزه</label>
-                  <input name="specialType" value={formData.specialType} onChange={handleInputChange} placeholder="سعودی" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none" />
+                  <label className="text-xs text-slate-400 block font-bold">نوع خدمات ویزه سعودی</label>
+                  <select name="specialType" value={formData.specialType} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
+                    <option value="ویزه بی خدمات">ویزه بی خدمات</option>
+                    <option value="ویزه با خدمات">ویزه با خدمات</option>
+                  </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs text-slate-400 block font-bold">هزینه ویزه (USD $)</label>
-                  <input name="specialCost" value={formData.specialCost} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                  <input name="specialCost" value={formData.specialCost} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
                 </div>
               </div>
 
-              <SectionHeader title="تکت هواپیما" />
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs text-slate-400 block font-bold">مسیر پرواز</label>
-                  <input name="flightRoute" value={formData.flightRoute} onChange={handleInputChange} placeholder="کابل-جده-کابل" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">قیمت خرید ($)</label>
-                    <input name="flightPurchase" value={formData.flightPurchase} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">قیمت فروش ($)</label>
-                    <input name="flightSelling" value={formData.flightSelling} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                </div>
-              </div>
+              {formData.specialType === 'ویزه با خدمات' && (
+                  <>
+                    <SectionHeader title="تکت هواپیما" />
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-xs text-slate-400 block font-bold">مسیر پرواز</label>
+                        <input name="flightRoute" value={formData.flightRoute} onChange={handleInputChange} placeholder="کابل-جده-کابل" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">قیمت خرید ($)</label>
+                          <input name="flightPurchase" value={formData.flightPurchase} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">قیمت فروش ($)</label>
+                          <input name="flightSelling" value={formData.flightSelling} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                      </div>
+                    </div>
 
-              <SectionHeader title="هوتل (مدینه منوره)" />
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">انتخاب شرکت همکار (مدینه)</label>
-                    <select name="hotelName" value={formData.hotelName} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
-                      <option value="">انتخاب شرکت...</option>
-                      {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">تعداد شب</label>
-                    <input name="hotelNights" value={formData.hotelNights} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">نوع اتاق (مدینه)</label>
-                    <select name="hotelRoomType" value={formData.hotelRoomType} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
-                      <option value="یک نفره">یک نفره</option>
-                      <option value="دو نفره">دو نفره</option>
-                      <option value="چندین نفره">چندین نفره</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">خرید هر شب ($)</label>
-                    <input name="hotelPurchase" value={formData.hotelPurchase} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">فروش هر شب ($)</label>
-                    <input name="hotelSelling" value={formData.hotelSelling} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                </div>
-              </div>
+                    <SectionHeader title="هوتل (مدینه منوره)" />
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">انتخاب شرکت همکار (مدینه)</label>
+                          <select name="hotelName" value={formData.hotelName} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
+                            <option value="">انتخاب شرکت...</option>
+                            {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">تعداد شب</label>
+                          <input name="hotelNights" value={formData.hotelNights} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">نوع اتاق (مدینه)</label>
+                          <select name="hotelRoomType" value={formData.hotelRoomType} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
+                            <option value="یک نفره">یک نفره</option>
+                            <option value="دو نفره">دو نفره</option>
+                            <option value="چندین نفره">چندین نفره</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">خرید هر شب ($)</label>
+                          <input name="hotelPurchase" value={formData.hotelPurchase} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">فروش هر شب ($)</label>
+                          <input name="hotelSelling" value={formData.hotelSelling} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                      </div>
+                    </div>
 
-              <SectionHeader title="هوتل (مکه مکرمه)" />
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">انتخاب شرکت همکار (مکه)</label>
-                    <select name="hotelMakkahName" value={formData.hotelMakkahName} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
-                      <option value="">انتخاب شرکت...</option>
-                      {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">تعداد شب مکه</label>
-                    <input name="hotelMakkahNights" value={formData.hotelMakkahNights} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">نوع اتاق (مکه)</label>
-                    <select name="hotelMakkahRoomType" value={formData.hotelMakkahRoomType} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
-                      <option value="یک نفره">یک نفره</option>
-                      <option value="دو نفره">دو نفره</option>
-                      <option value="چندین نفره">چندین نفره</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">خرید هر شب مکه ($)</label>
-                    <input name="hotelMakkahPurchase" value={formData.hotelMakkahPurchase} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">فروش هر شب مکه ($)</label>
-                    <input name="hotelMakkahSelling" value={formData.hotelMakkahSelling} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                </div>
-              </div>
+                    <SectionHeader title="هوتل (مکه مکرمه)" />
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">انتخاب شرکت همکار (مکه)</label>
+                          <select name="hotelMakkahName" value={formData.hotelMakkahName} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
+                            <option value="">انتخاب شرکت...</option>
+                            {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">تعداد شب مکه</label>
+                          <input name="hotelMakkahNights" value={formData.hotelMakkahNights} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">نوع اتاق (مکه)</label>
+                          <select name="hotelMakkahRoomType" value={formData.hotelMakkahRoomType} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
+                            <option value="یک نفره">یک نفره</option>
+                            <option value="دو نفره">دو نفره</option>
+                            <option value="چندین نفره">چندین نفره</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">خرید هر شب مکه ($)</label>
+                          <input name="hotelMakkahPurchase" value={formData.hotelMakkahPurchase} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">فروش هر شب مکه ($)</label>
+                          <input name="hotelMakkahSelling" value={formData.hotelMakkahSelling} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                      </div>
+                    </div>
 
-              <SectionHeader title="ترانسپورت" />
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">انتخاب شرکت ترانسپورتی</label>
-                    <select name="transportCompany" value={formData.transportCompany} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
-                      <option value="">انتخاب شرکت...</option>
-                      {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">نوع وسیله نقلیه</label>
-                    <select name="transportType" value={formData.transportType} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
-                      <option value="بس (حافلة)">بس (حافلة)</option>
-                      <option value="GMC (جمس)">GMC (جمس)</option>
-                      <option value="تاکسی خصوصی">تاکسی خصوصی</option>
-                      <option value="قطار حرمین">قطار حرمین</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">خرید ترانسپورت ($)</label>
-                    <input name="transportPurchase" value={formData.transportPurchase} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">فروش ترانسپورت ($)</label>
-                    <input name="transportSelling" value={formData.transportSelling} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                </div>
-              </div>
+                    <SectionHeader title="ترانسپورت" />
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">انتخاب شرکت ترانسپورتی</label>
+                          <select name="transportCompany" value={formData.transportCompany} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
+                            <option value="">انتخاب شرکت...</option>
+                            {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">نوع وسیله نقلیه</label>
+                          <select name="transportType" value={formData.transportType} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
+                            <option value="بس (حافلة)">بس (حافلة)</option>
+                            <option value="GMC (جمس)">GMC (جمس)</option>
+                            <option value="تاکسی خصوصی">تاکسی خصوصی</option>
+                            <option value="قطار حرمین">قطار حرمین</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">خرید ترانسپورت ($)</label>
+                          <input name="transportPurchase" value={formData.transportPurchase} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 block font-bold">فروش ترانسپورت ($)</label>
+                          <input name="transportSelling" value={formData.transportSelling} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                        </div>
+                      </div>
+                    </div>
 
-              <SectionHeader title="غذا" />
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">انتخاب شرکت همکار غذا</label>
-                    <select name="foodCompany" value={formData.foodCompany} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
-                      <option value="">انتخاب شرکت...</option>
-                      {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">قیمت خرید غذا ($)</label>
-                    <input name="foodPurchase" value={formData.foodPurchase} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 block font-bold">قیمت فروش غذا ($)</label>
-                    <input name="foodSelling" value={formData.foodSelling} onChange={handleInputChange} placeholder="." className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
-                  </div>
-                </div>
-              </div>
+                    <SectionHeader title="نماینده در عربستان" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs text-slate-400 block font-bold">انتخاب نماینده (شرکت همکار)</label>
+                        <select name="saudiRepresentative" value={formData.saudiRepresentative} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold">
+                          <option value="">انتخاب نماینده...</option>
+                          {companies.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-slate-400 block font-bold">هزینه خدمات نماینده (USD $)</label>
+                        <input name="representativeFee" value={formData.representativeFee} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none text-center" />
+                      </div>
+                    </div>
+                    {/* Added Family Count below Representative Section as requested */}
+                    <div className="mt-4 grid grid-cols-1 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs text-slate-400 block font-bold">تعداد فامیل (همراهان)</label>
+                        <div className="relative">
+                          <Users2 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                          <input name="familyCount" type="number" value={formData.familyCount} onChange={handleInputChange} className="w-full pr-12 pl-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-[#108548] transition-all outline-none font-bold" placeholder="1" />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+              )}
 
               <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-50">
                 <div className="flex flex-col gap-4 w-full md:w-auto">
@@ -1310,13 +1313,13 @@ const Travelers: React.FC<TravelersProps> = ({ companies, travelers, onUpdateTra
                           <input readOnly name="totalPayable" value={formData.totalPayable} className="w-32 px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg outline-none text-center font-bold text-slate-800 cursor-not-allowed" />
                           <span className="absolute -left-8 top-1/2 -translate-y-1/2 text-[10px] text-slate-300 font-bold uppercase">$</span>
                        </div>
-                       <span className="text-[10px] font-bold text-slate-300 mt-1">≈ {(parseFloat(formData.totalPayable.replace(/,/g, '')) * SAR_RATE).toLocaleString()} SAR</span>
+                       <span className="text-[10px] font-bold text-slate-300 mt-1">≈ {(parseFloat(formData.totalPayable.replace(/,/g, '')) * SAR_RATE).toLocaleString('en-US')} SAR</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <label className="text-xs font-black text-slate-500">مجموع دریافتی فعلی:</label>
                     <div className="relative">
-                       <input name="totalReceived" value={formData.totalReceived} onChange={handleInputChange} placeholder="." className="w-32 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg focus:ring-2 focus:ring-[#108548] outline-none text-center font-bold text-emerald-600" />
+                       <input name="totalReceived" value={formData.totalReceived} onChange={handleInputChange} placeholder="0" className="w-32 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg focus:ring-2 focus:ring-[#108548] outline-none text-center font-bold text-emerald-600" />
                        <span className="absolute -left-8 top-1/2 -translate-y-1/2 text-[10px] text-slate-300 font-bold uppercase">$</span>
                     </div>
                   </div>
