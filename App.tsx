@@ -48,21 +48,18 @@ const App: React.FC = () => {
     {
       id: '1',
       code: 'TRV-1042',
-      firstNameDari: 'احمد',
-      lastNameDari: 'رحمانی',
-      firstNameEng: 'Ahmad',
-      lastNameEng: 'Rahmani',
       name: 'احمد رحمانی',
       tripType: 'عمره',
       passport: 'P1234567',
-      phone: '۰۷۸۸۸۸۸۸۸۸',
+      phone: '0788888888',
       status: 'تایید شده',
-      date: '۱۴۰۳/۰۲/۱۵',
+      date: '1403/02/15',
       tripDate: '1403/05/20',
       saudiRepresentative: 'شركة مكة للفنادق والخدمات',
       representativeFee: '50',
-      visaPurchase: '100',
-      visaSelling: '150',
+      visaProviderCompany: 'شركة مكة للفنادق والخدمات',
+      visaPurchase: '350',
+      visaSelling: '400',
       flightRoute: 'کابل-جده',
       flightPurchase: '450',
       flightSelling: '520',
@@ -74,15 +71,24 @@ const App: React.FC = () => {
       hotelMakkahSelling: '70',
       transportPurchase: '80',
       transportSelling: '100',
-      foodPurchase: '30',
-      foodSelling: '50',
       totalReceived: '500',
       totalPayable: '1520',
       ledger: [
-        { id: 'l1', date: '۱۴۰۳/۰۲/۱۵', description: 'فروش پکیج عمره', debit: 1520, credit: 0 },
-        { id: 'l2', date: '۱۴۰۳/۰۲/۱۶', description: 'رسید قسط اول', debit: 0, credit: 500 }
+        { id: 'l1', date: '1403/02/15', description: 'فروش پکیج عمره', debit: 1520, credit: 0 },
+        { id: 'l2', date: '1403/02/16', description: 'رسید قسط اول', debit: 0, credit: 500 }
       ]
     }
+  ]);
+
+  const [expenses, setExpenses] = useState<any[]>([
+    { id: '1', description: 'کرایه دفتر مرکزی - ماه جوزا', amount: '400', category: 'کرایه', date: '1403/03/01', payee: 'مالک ساختمان' },
+    { id: '2', description: 'معاشات کارمندان بخش فروش', amount: '1200', category: 'معاشات', date: '1403/03/05', payee: 'کارمندان' },
+    { id: '3', description: 'بیل برق و انترنت دفتر', amount: '60', category: 'خدمات', date: '1403/03/08', payee: 'شرکت برشنا / افغان تلیکام' }
+  ]);
+
+  const [transactions, setTransactions] = useState<any[]>([
+    { id: '1', date: '1403/05/01', type: 'دریافت', category: 'دریافت از حاجی', amount: 500, person: 'احمد رحمانی', period: 'دوره حج 1403 - کاروان اول', description: 'پیش‌پرداخت قسط اول', status: 'تأیید شده' },
+    { id: '2', date: '1403/05/02', type: 'پرداخت', category: 'مصرف دوا', amount: 100, person: 'دواخانه مرکزی', period: 'دوره حج 1403 - کاروان اول', description: 'خرید تجهیزات صحی اولیه', status: 'تأیید شده' }
   ]);
 
   const handleUpdateCompanies = (updatedCompanies: ArabicCompany[]) => {
@@ -91,6 +97,57 @@ const App: React.FC = () => {
 
   const handleUpdateTravelers = (updatedTravelers: any[]) => {
     setTravelers(updatedTravelers);
+  };
+
+  const handleAddExpense = (newExpense: any) => {
+    setExpenses([newExpense, ...expenses]);
+    
+    // Auto-sync with CashBox
+    const newTransaction = {
+      id: Date.now().toString() + '-sync',
+      date: newExpense.date,
+      type: 'پرداخت',
+      category: newExpense.category === 'معاشات' ? 'معاش' : (newExpense.category === 'کرایه' ? 'پرداخت کرایه' : 'سایر مصارف'),
+      amount: parseFloat(newExpense.amount.replace(/,/g, '')),
+      person: newExpense.payee,
+      period: 'دوره جاری',
+      description: `ثبت خودکار از مصارف: ${newExpense.description}`,
+      status: 'تأیید شده'
+    };
+    setTransactions([newTransaction, ...transactions]);
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    setExpenses(expenses.filter(e => e.id !== id));
+  };
+
+  const handleAddTransaction = (newTransaction: any) => {
+    setTransactions([newTransaction, ...transactions]);
+
+    // Auto-sync with Expenses if it's an expense category
+    const expenseCategories = ['مصرف دوا', 'پرداخت کرایه', 'معاش', 'مصارف فوری حج'];
+    if (newTransaction.type === 'پرداخت' && expenseCategories.includes(newTransaction.category)) {
+      const categoryMapping: any = {
+        'مصرف دوا': 'خدمات',
+        'پرداخت کرایه': 'کرایه',
+        'معاش': 'معاشات',
+        'مصارف فوری حج': 'عمومی'
+      };
+      
+      const newExpense = {
+        id: Date.now().toString() + '-sync-exp',
+        description: newTransaction.description,
+        amount: newTransaction.amount.toString(),
+        category: categoryMapping[newTransaction.category] || 'عمومی',
+        date: newTransaction.date,
+        payee: newTransaction.person
+      };
+      setExpenses([newExpense, ...expenses]);
+    }
+  };
+
+  const handleDeleteTransaction = (id: string) => {
+    setTransactions(transactions.filter(t => t.id !== id));
   };
 
   return (
@@ -109,7 +166,11 @@ const App: React.FC = () => {
         ) : activeTab === 'ledger' ? (
           <GeneralLedger />
         ) : activeTab === 'cashbox' ? (
-          <CashBox />
+          <CashBox 
+            transactions={transactions} 
+            onAddTransaction={handleAddTransaction} 
+            onDeleteTransaction={handleDeleteTransaction}
+          />
         ) : activeTab === 'arabic-companies' ? (
           <ArabicCompanies 
             companies={companies} 
@@ -122,7 +183,11 @@ const App: React.FC = () => {
         ) : activeTab === 'accounts' ? (
           <Accounts />
         ) : activeTab === 'expenses' ? (
-          <Expenses />
+          <Expenses 
+            expenses={expenses} 
+            onAddExpense={handleAddExpense} 
+            onDeleteExpense={handleDeleteExpense}
+          />
         ) : activeTab === 'commission' ? (
           <Commission />
         ) : activeTab === 'history' ? (

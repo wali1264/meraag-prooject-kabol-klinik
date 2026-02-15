@@ -30,39 +30,18 @@ interface Expense {
   payee: string;
 }
 
-const Expenses: React.FC = () => {
+interface ExpensesProps {
+  expenses: Expense[];
+  onAddExpense: (e: Expense) => void;
+  onDeleteExpense: (id: string) => void;
+}
+
+const Expenses: React.FC<ExpensesProps> = ({ expenses, onAddExpense, onDeleteExpense }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  
-  const [expenses, setExpenses] = useState<Expense[]>([
-    {
-      id: '1',
-      description: 'کرایه دفتر مرکزی - ماه جوزا',
-      amount: '۴۰۰',
-      category: 'کرایه',
-      date: '۱۴۰۳/۰۳/۰۱',
-      payee: 'مالک ساختمان'
-    },
-    {
-      id: '2',
-      description: 'معاشات کارمندان بخش فروش',
-      amount: '۱,۲۰۰',
-      category: 'معاشات',
-      date: '۱۴۰۳/۰۳/۰۵',
-      payee: 'کارمندان'
-    },
-    {
-      id: '3',
-      description: 'بیل برق و انترنت دفتر',
-      amount: '۶۰',
-      category: 'خدمات',
-      date: '۱۴۰۳/۰۳/۰۸',
-      payee: 'شرکت برشنا / افغان تلیکام'
-    }
-  ]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,17 +57,13 @@ const Expenses: React.FC = () => {
     description: '',
     amount: '',
     category: 'عمومی',
-    payee: ''
+    payee: '',
+    date: new Intl.DateTimeFormat('fa-AF', { numberingSystem: 'latn' }).format(new Date())
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const deleteExpense = (id: string) => {
-    setExpenses(prev => prev.filter(e => e.id !== id));
-    setOpenMenuId(null);
   };
 
   const startEdit = (expense: Expense) => {
@@ -97,7 +72,8 @@ const Expenses: React.FC = () => {
       description: expense.description,
       amount: expense.amount.replace(/,/g, ''),
       category: expense.category,
-      payee: expense.payee
+      payee: expense.payee,
+      date: expense.date
     });
     setIsModalOpen(true);
     setOpenMenuId(null);
@@ -106,27 +82,18 @@ const Expenses: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingExpenseId) {
-      setExpenses(prev => prev.map(e => 
-        e.id === editingExpenseId 
-          ? { 
-              ...e, 
-              description: formData.description,
-              amount: Number(formData.amount).toLocaleString(),
-              category: formData.category,
-              payee: formData.payee
-            } 
-          : e
-      ));
+      // Logic for editing lifted state could be added to App.tsx
+      alert('ویرایش در حال حاضر برای مصارف متصل پشتیبانی نمی‌شود. لطفاً حذف و مجدداً ثبت کنید.');
     } else {
       const newEntry: Expense = {
         id: Date.now().toString(),
         description: formData.description,
-        amount: Number(formData.amount).toLocaleString(),
+        amount: Number(formData.amount).toLocaleString('en-US'),
         category: formData.category,
-        date: new Intl.DateTimeFormat('fa-AF').format(new Date()),
+        date: formData.date,
         payee: formData.payee
       };
-      setExpenses([newEntry, ...expenses]);
+      onAddExpense(newEntry);
     }
     closeModal();
   };
@@ -134,14 +101,20 @@ const Expenses: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingExpenseId(null);
-    setFormData({ description: '', amount: '', category: 'عمومی', payee: '' });
+    setFormData({ 
+      description: '', 
+      amount: '', 
+      category: 'عمومی', 
+      payee: '',
+      date: new Intl.DateTimeFormat('fa-AF', { numberingSystem: 'latn' }).format(new Date())
+    });
   };
 
   const filteredExpenses = expenses.filter(e => 
     e.description.includes(searchTerm) || e.category.includes(searchTerm) || e.payee.includes(searchTerm)
   );
 
-  const totalExpenses = 1660;
+  const totalExpenses = expenses.reduce((sum, e) => sum + parseFloat(e.amount.replace(/,/g, '')), 0);
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
@@ -149,7 +122,7 @@ const Expenses: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-black text-slate-800">مصارفات جاری شرکت</h2>
-          <p className="text-slate-500 mt-1 font-medium">ثبت و کنترل هزینه‌های عملیاتی و اداری</p>
+          <p className="text-slate-500 mt-1 font-medium">ثبت و کنترل هزینه‌های عملیاتی و اداری (متصل به صندوق)</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -164,27 +137,28 @@ const Expenses: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 font-bold text-sm">مجموع مصارف ماه ($)</span>
+            <span className="text-slate-400 font-bold text-sm">مجموع مصارف ($)</span>
             <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center">
               <TrendingDown size={24} />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-slate-800">{totalExpenses.toLocaleString()} $</h3>
-            <p className="text-xs text-slate-400 font-bold">≈ {(totalExpenses * SAR_RATE).toLocaleString()} SAR</p>
+            <h3 className="text-3xl font-black text-slate-800">{totalExpenses.toLocaleString('en-US')} $</h3>
+            <p className="text-xs text-slate-400 font-bold">≈ {(totalExpenses * SAR_RATE).toLocaleString('en-US')} SAR</p>
           </div>
         </div>
 
         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-slate-400 font-bold text-sm">اجاره و ساختمان</span>
-            <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
               <Building2 size={24} />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-amber-600">۴۰۰ $</h3>
-            <p className="text-xs text-slate-400 font-bold">سهم ۲۵٪ از کل مصارف</p>
+            <h3 className="text-3xl font-black text-amber-600">
+               {expenses.filter(e => e.category === 'کرایه').reduce((sum, e) => sum + parseFloat(e.amount.replace(/,/g, '')), 0).toLocaleString('en-US')} $
+            </h3>
           </div>
         </div>
 
@@ -196,8 +170,9 @@ const Expenses: React.FC = () => {
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-indigo-500">۱,۲۰۰ $</h3>
-            <p className="text-xs text-slate-400 font-bold">بزرگترین بخش هزینه</p>
+            <h3 className="text-3xl font-black text-indigo-500">
+               {expenses.filter(e => e.category === 'معاشات').reduce((sum, e) => sum + parseFloat(e.amount.replace(/,/g, '')), 0).toLocaleString('en-US')} $
+            </h3>
           </div>
         </div>
       </div>
@@ -216,7 +191,7 @@ const Expenses: React.FC = () => {
         </div>
         <button className="flex items-center gap-2 px-6 py-4 border border-slate-100 rounded-2xl text-slate-600 hover:bg-slate-50 transition-all font-bold">
           <Filter size={20} />
-          فیلتر پیشرفته
+          فیلتر
         </button>
       </div>
 
@@ -265,7 +240,7 @@ const Expenses: React.FC = () => {
                         <span className="text-lg font-black text-rose-600">
                         {expense.amount} $
                         </span>
-                        <span className="text-[10px] font-bold text-slate-300">≈ {(parseFloat(expense.amount.replace(/,/g, '')) * SAR_RATE).toLocaleString()} SAR</span>
+                        <span className="text-[10px] font-bold text-slate-300">≈ {(parseFloat(expense.amount.replace(/,/g, '')) * SAR_RATE).toLocaleString('en-US')} SAR</span>
                     </div>
                   </td>
                   <td className="px-8 py-6 text-center relative">
@@ -291,12 +266,9 @@ const Expenses: React.FC = () => {
                         >
                           <Edit size={16} className="text-blue-500" /> ویرایش هزینه
                         </button>
-                        <button className="w-full text-right px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3">
-                          <Eye size={16} className="text-indigo-500" /> مشاهده پیوست‌ها
-                        </button>
                         <div className="h-px bg-slate-50 my-1"></div>
                         <button 
-                          onClick={() => deleteExpense(expense.id)}
+                          onClick={() => onDeleteExpense(expense.id)}
                           className="w-full text-right px-4 py-2 text-sm font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-3"
                         >
                           <Trash2 size={16} /> حذف هزینه
@@ -370,19 +342,31 @@ const Expenses: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-400 block text-right">مبلغ هزینه (USD $)</label>
-                <div className="relative">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-400 block text-right">مبلغ هزینه (USD $)</label>
+                  <div className="relative">
+                    <input 
+                      required
+                      name="amount"
+                      type="number"
+                      value={formData.amount}
+                      onChange={handleInputChange}
+                      placeholder="0"
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all font-black text-2xl text-rose-600"
+                    />
+                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">$</span>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-400 block text-right">تاریخ پرداخت</label>
                   <input 
                     required
-                    name="amount"
-                    type="number"
-                    value={formData.amount}
+                    name="date"
+                    value={formData.date}
                     onChange={handleInputChange}
-                    placeholder="۰"
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all font-black text-2xl text-rose-600"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold"
                   />
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-300">$</span>
                 </div>
               </div>
 
@@ -392,7 +376,7 @@ const Expenses: React.FC = () => {
                   className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-black py-5 rounded-[24px] transition-all shadow-xl shadow-rose-100 flex items-center justify-center gap-3"
                 >
                   <Check size={22} />
-                  {editingExpenseId ? 'بروزرسانی هزینه' : 'ثبت هزینه'}
+                  {editingExpenseId ? 'بروزرسانی هزینه' : 'ثبت هزینه و برداشت از صندوق'}
                 </button>
                 <button 
                   type="button"

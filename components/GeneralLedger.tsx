@@ -15,7 +15,8 @@ import {
   DollarSign,
   TrendingUp,
   X,
-  CheckCircle2
+  CheckCircle2,
+  ChevronLeft
 } from 'lucide-react';
 
 interface LedgerEntry {
@@ -58,6 +59,7 @@ const GeneralLedger: React.FC = () => {
 
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
+  const [viewingPeriod, setViewingPeriod] = useState<FinancialPeriod | null>(null);
   const [entryType, setEntryType] = useState<'عاید' | 'مصرف'>('عاید');
 
   const [formData, setFormData] = useState({
@@ -114,8 +116,7 @@ const GeneralLedger: React.FC = () => {
       status: 'active',
       entries: []
     };
-    // Close other active periods first (simple logic)
-    setPeriods([newPeriod, ...periods.map(p => ({ ...p, status: 'closed' as const }))]);
+    setPeriods([newPeriod, ...periods.map(p => ({ ...p, status: 'closed' as const, summary: p.status === 'active' ? calculateSummary(p.entries) : p.summary }))]);
     setIsPeriodModalOpen(false);
     setPeriodName('');
   };
@@ -226,7 +227,7 @@ const GeneralLedger: React.FC = () => {
           </div>
 
           {/* Transactions Table */}
-          <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden">
+          <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden text-right">
              <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                 <h3 className="text-xl font-black text-slate-800">ریز حسابات دوره: {activePeriod.name}</h3>
                 <div className="flex gap-2">
@@ -274,45 +275,128 @@ const GeneralLedger: React.FC = () => {
       )}
 
       {/* Archives Section */}
-      <div className="space-y-4">
+      <div className="space-y-4 text-right">
          <div className="flex items-center gap-2">
             <Archive size={20} className="text-slate-400" />
             <h3 className="text-lg font-black text-slate-600">آرشیو دوره‌های بسته شده</h3>
          </div>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {periods.filter(p => p.status === 'closed').map(period => (
-              <div key={period.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center justify-between hover:border-emerald-200 transition-all cursor-pointer">
+              <div 
+                key={period.id} 
+                onClick={() => setViewingPeriod(period)}
+                className="group bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center justify-between hover:border-emerald-200 transition-all cursor-pointer"
+              >
                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
                        <Lock size={20} />
                     </div>
                     <div>
                        <h4 className="font-black text-slate-700">{period.name}</h4>
-                       <p className="text-[10px] font-bold text-slate-400">{period.startDate} تا {period.endDate}</p>
+                       <p className="text-[10px] font-bold text-slate-400">{period.startDate} تا {period.endDate || 'نامعلوم'}</p>
                     </div>
                  </div>
                  <div className="text-left">
                     <span className="text-xs font-black text-emerald-600 block">سود نهایی: {period.summary?.profit.toLocaleString('en-US')} $</span>
-                    <button className="text-[10px] font-bold text-blue-500 mt-1 hover:underline flex items-center gap-1">مشاهده گزارش <Printer size={10}/></button>
+                    <button className="text-[10px] font-bold text-blue-500 mt-1 group-hover:underline flex items-center gap-1">مشاهده ریز حساب <ChevronLeft size={10}/></button>
                  </div>
               </div>
             ))}
+            {periods.filter(p => p.status === 'closed').length === 0 && (
+              <div className="md:col-span-2 p-10 text-center border-2 border-dashed border-slate-100 rounded-[32px] text-slate-300 font-bold">
+                 هنوز هیچ دوره‌ای آرشیو نشده است.
+              </div>
+            )}
          </div>
       </div>
+
+      {/* View Archived Modal */}
+      {viewingPeriod && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 my-8">
+             <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/80">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-100 text-emerald-600 rounded-2xl"><Archive size={24}/></div>
+                  <div className="text-right">
+                    <h3 className="text-2xl font-black text-slate-800">بازبینی دوره آرشیو شده</h3>
+                    <p className="text-xs font-bold text-slate-400">{viewingPeriod.name} ({viewingPeriod.startDate} الی {viewingPeriod.endDate})</p>
+                  </div>
+                </div>
+                <button onClick={() => setViewingPeriod(null)} className="p-3 hover:bg-white rounded-2xl text-slate-400 transition-colors shadow-sm border border-slate-100"><X size={24} /></button>
+             </div>
+             
+             <div className="p-8 space-y-8 text-right overflow-y-auto max-h-[70vh]">
+                {/* Archived Summary */}
+                <div className="grid grid-cols-3 gap-6">
+                   <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100">
+                      <span className="text-[10px] font-black text-blue-400 uppercase">مجموع عواید</span>
+                      <h4 className="text-xl font-black text-blue-700">{viewingPeriod.summary?.totalIncome.toLocaleString('en-US')} $</h4>
+                   </div>
+                   <div className="bg-rose-50 p-6 rounded-3xl border border-rose-100">
+                      <span className="text-[10px] font-black text-rose-400 uppercase">مجموع مصارف</span>
+                      <h4 className="text-xl font-black text-rose-700">{viewingPeriod.summary?.totalExpense.toLocaleString('en-US')} $</h4>
+                   </div>
+                   <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100">
+                      <span className="text-[10px] font-black text-emerald-400 uppercase">سود نهایی دوره</span>
+                      <h4 className="text-xl font-black text-emerald-700">{viewingPeriod.summary?.profit.toLocaleString('en-US')} $</h4>
+                   </div>
+                </div>
+
+                <div className="border border-slate-100 rounded-[32px] overflow-hidden">
+                   <table className="w-full text-right">
+                      <thead className="bg-slate-50">
+                        <tr>
+                           <th className="px-6 py-4 text-xs font-black text-slate-500">تاریخ</th>
+                           <th className="px-6 py-4 text-xs font-black text-slate-500">سند</th>
+                           <th className="px-6 py-4 text-xs font-black text-slate-500">نوع/کتگوری</th>
+                           <th className="px-6 py-4 text-xs font-black text-slate-500">شرح کامل تراکنش</th>
+                           <th className="px-6 py-4 text-xs font-black text-slate-500">مبلغ ($)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {viewingPeriod.entries.map((entry) => (
+                          <tr key={entry.id} className="hover:bg-slate-50/30 transition-colors">
+                             <td className="px-6 py-4 text-sm font-bold text-slate-400">{entry.date}</td>
+                             <td className="px-6 py-4 font-mono text-xs text-slate-400">#{entry.docNo}</td>
+                             <td className="px-6 py-4">
+                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black ${entry.type === 'عاید' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-600'}`}>
+                                   {entry.type} - {entry.category}
+                                </span>
+                             </td>
+                             <td className="px-6 py-4 text-sm font-bold text-slate-700">{entry.description}</td>
+                             <td className={`px-6 py-4 font-black ${entry.type === 'عاید' ? 'text-blue-600' : 'text-rose-500'}`}>
+                                {entry.type === 'عاید' ? '+' : '-'}{entry.amount.toLocaleString('en-US')} $
+                             </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                   </table>
+                </div>
+             </div>
+
+             <div className="p-8 border-t border-slate-50 flex justify-between bg-slate-50/30">
+                <button className="flex items-center gap-2 px-8 py-3 bg-white border border-slate-200 rounded-2xl font-black text-slate-600 hover:bg-slate-100 transition-all shadow-sm">
+                   <Printer size={18} /> چاپ گزارش کامل دوره
+                </button>
+                <button onClick={() => setViewingPeriod(null)} className="px-10 py-3 bg-slate-900 text-white rounded-2xl font-black hover:bg-slate-800 transition-all">بستن پنجره بازبینی</button>
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* New Entry Modal */}
       {isEntryModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+          <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-200">
              <div className={`p-8 border-b border-slate-50 flex justify-between items-center ${entryType === 'عاید' ? 'bg-blue-50/30' : 'bg-rose-50/30'}`}>
                 <h3 className="text-2xl font-black text-slate-800">ثبت {entryType} جدید</h3>
                 <button onClick={() => setIsEntryModalOpen(false)} className="p-2 hover:bg-white rounded-full text-slate-400"><X size={24} /></button>
              </div>
-             <form onSubmit={handleAddEntry} className="p-8 space-y-5">
+             <form onSubmit={handleAddEntry} className="p-8 space-y-5 text-right">
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-1.5">
                       <label className="text-xs font-black text-slate-400 block px-1">شماره سند</label>
-                      <input name="docNo" value={formData.docNo} onChange={(e) => setFormData({...formData, docNo: e.target.value})} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-slate-900 outline-none font-mono" placeholder="101"/>
+                      <input name="docNo" value={formData.docNo} onChange={(e) => setFormData({...formData, docNo: e.target.value})} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-slate-900 outline-none font-mono text-center" placeholder="101"/>
                    </div>
                    <div className="space-y-1.5">
                       <label className="text-xs font-black text-slate-400 block px-1">کتگوری</label>
@@ -321,7 +405,7 @@ const GeneralLedger: React.FC = () => {
                 </div>
                 <div className="space-y-1.5">
                    <label className="text-xs font-black text-slate-400 block px-1">مبلغ (USD $)</label>
-                   <input required type="number" name="amount" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-slate-900 outline-none text-2xl font-black text-slate-800" placeholder="0"/>
+                   <input required type="number" name="amount" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-slate-900 outline-none text-2xl font-black text-slate-800 text-center" placeholder="0"/>
                 </div>
                 <div className="space-y-1.5">
                    <label className="text-xs font-black text-slate-400 block px-1">توضیحات</label>

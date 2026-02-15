@@ -16,7 +16,8 @@ import {
   Printer,
   Calendar,
   User,
-  Tags
+  Tags,
+  Trash2
 } from 'lucide-react';
 
 const SAR_RATE = 3.75;
@@ -33,32 +34,13 @@ interface CashTransaction {
   status: 'تأیید شده' | 'در انتظار تأیید';
 }
 
-const CashBox: React.FC = () => {
-  const [transactions, setTransactions] = useState<CashTransaction[]>([
-    {
-      id: '1',
-      date: '1403/05/01',
-      type: 'دریافت',
-      category: 'دریافت از حاجی',
-      amount: 500,
-      person: 'احمد رحمانی',
-      period: 'دوره حج 1403 - کاروان اول',
-      description: 'پیش‌پرداخت قسط اول',
-      status: 'تأیید شده'
-    },
-    {
-      id: '2',
-      date: '1403/05/02',
-      type: 'پرداخت',
-      category: 'مصرف دوا',
-      amount: 100,
-      person: 'دواخانه مرکزی',
-      period: 'دوره حج 1403 - کاروان اول',
-      description: 'خرید تجهیزات صحی اولیه',
-      status: 'تأیید شده'
-    }
-  ]);
+interface CashBoxProps {
+  transactions: CashTransaction[];
+  onAddTransaction: (t: CashTransaction) => void;
+  onDeleteTransaction: (id: string) => void;
+}
 
+const CashBox: React.FC<CashBoxProps> = ({ transactions, onAddTransaction, onDeleteTransaction }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'دریافت' | 'پرداخت'>('دریافت');
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +85,7 @@ const CashBox: React.FC = () => {
       status: modalType === 'پرداخت' ? 'در انتظار تأیید' : 'تأیید شده'
     };
 
-    setTransactions([newTransaction, ...transactions]);
+    onAddTransaction(newTransaction);
     closeModal();
   };
 
@@ -123,7 +105,7 @@ const CashBox: React.FC = () => {
   const closePeriod = () => {
     if (confirm('آیا از بستن صندوق و تحویل موجودی به رئیس اطمینان دارید؟ دوره فعلی آرشیو خواهد شد.')) {
       alert('گزارش نهایی صندوق صادر شد. صندوق برای دوره جدید آماده است.');
-      setTransactions([]);
+      // This logic should probably be lifted to App.tsx if state clearing is needed
     }
   };
 
@@ -150,7 +132,7 @@ const CashBox: React.FC = () => {
         </button>
       </div>
 
-      {/* Balance Card - BIG AND CLEAR */}
+      {/* Balance Card */}
       <div className="bg-emerald-600 p-10 rounded-[48px] shadow-2xl shadow-emerald-200 text-white relative overflow-hidden">
         <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -184,7 +166,7 @@ const CashBox: React.FC = () => {
         </div>
       </div>
 
-      {/* Daily Summary */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right">
         <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-5">
            <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
@@ -240,6 +222,7 @@ const CashBox: React.FC = () => {
                 <th className="px-8 py-5 text-sm font-black text-slate-500">دریافت ($)</th>
                 <th className="px-8 py-5 text-sm font-black text-slate-500">پرداخت ($)</th>
                 <th className="px-8 py-5 text-sm font-black text-emerald-600">باقی‌مانده</th>
+                <th className="px-8 py-5 text-sm font-black text-slate-400">عملیات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -275,13 +258,21 @@ const CashBox: React.FC = () => {
                             <span className="text-[10px] text-slate-400">≈ {(runningBalance * SAR_RATE).toLocaleString('en-US')} SAR</span>
                         </div>
                       </td>
+                      <td className="px-8 py-6 text-center">
+                         <button 
+                           onClick={() => onDeleteTransaction(t.id)}
+                           className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
+                         >
+                           <Trash2 size={18} />
+                         </button>
+                      </td>
                     </tr>
                   );
                 }).reverse();
               })()}
               {transactions.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-8 py-12 text-center text-slate-400 font-bold">هیچ تراکنشی در این دوره ثبت نشده است.</td>
+                  <td colSpan={7} className="px-8 py-12 text-center text-slate-400 font-bold">هیچ تراکنشی در این دوره ثبت نشده است.</td>
                 </tr>
               )}
             </tbody>
@@ -336,6 +327,7 @@ const CashBox: React.FC = () => {
                     {modalType === 'دریافت' ? (
                       <select name="category" value={formData.category} onChange={handleInputChange} className="w-full pr-12 pl-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold">
                         <option value="">انتخاب کنید...</option>
+                        <option value="مسافر">مسافر</option>
                         <option value="دریافت از حاجی">دریافت از حاجی</option>
                         <option value="انتقال از بانک">انتقال از بانک</option>
                         <option value="برگشت مصرف">برگشت مصرف</option>
@@ -344,6 +336,7 @@ const CashBox: React.FC = () => {
                     ) : (
                       <select name="category" value={formData.category} onChange={handleInputChange} className="w-full pr-12 pl-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold">
                         <option value="">انتخاب کنید...</option>
+                        <option value="مسافر">مسافر</option>
                         <option value="مصرف دوا">مصرف دوا</option>
                         <option value="پرداخت کرایه">پرداخت کرایه</option>
                         <option value="معاش">معاش</option>
@@ -355,7 +348,7 @@ const CashBox: React.FC = () => {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-400 block px-1">دوره حج</label>
-                  <input required name="period" value={formData.period} onChange={handleInputChange} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-xs" readOnly />
+                  <input required name="period" value={formData.period} onChange={handleInputChange} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-xs" />
                 </div>
               </div>
 
