@@ -1,204 +1,143 @@
 
-import React, { useState } from 'react';
-import Sidebar from './components/Sidebar';
+import React, { useState, useEffect } from 'react';
+import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
-import Travelers from './components/Travelers';
-import Services from './components/Services';
-import Accounts from './components/Accounts';
-import Expenses from './components/Expenses';
-import Commission from './components/Commission';
-import History from './components/History';
+import SalesJournal from './components/SalesJournal';
+import PurchaseJournal from './components/PurchaseJournal';
+import Customers from './components/Customers';
 import Reports from './components/Reports';
-import GeneralLedger from './components/GeneralLedger';
-import CashBox from './components/CashBox';
-import ArabicCompanies, { ArabicCompany } from './components/ArabicCompanies';
+import { AppData, Sale, Purchase, Customer } from './types';
+
+const INITIAL_DATA: AppData = {
+  customers: [
+    { id: '1', code: 'CUS-0001', name: 'خدمات ترانسپورتی اتفاق', phone: '0700123456', type: 'هر دو' as any, createdAt: new Date().toISOString() },
+    { id: '2', code: 'CUS-0002', name: 'فروشگاه تایر ولی', phone: '0788654321', type: 'خریدار' as any, createdAt: new Date().toISOString() },
+  ],
+  sales: [],
+  purchases: [],
+  settings: {
+    lowStockThreshold: 1000,
+    companyName: 'FuelPro AF'
+  }
+};
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  
-  const [companies, setCompanies] = useState<ArabicCompany[]>([
-    {
-      id: '1',
-      name: 'شركة مكة للفنادق والخدمات',
-      code: 'SA-101',
-      location: 'مکه مکرمه',
-      phone: '+966 12 345 6789',
-      email: 'info@makkah-hotels.sa',
-      balance: 2500.50,
-      ledger: [
-        { id: 'l1', date: '۱۴۰۳/۰۳/۰۱', description: 'رزرو گروهی هتل مکه - ۲۰ نفر', debit: 3000, credit: 0 },
-        { id: 'l2', date: '۱۴۰۳/۰۳/۰۵', description: 'پرداخت قسط اول حواله', debit: 0, credit: 499.50 }
-      ]
-    },
-    {
-      id: '2',
-      name: 'مجموعة المدينة للنقل والخدمات',
-      code: 'SA-202',
-      location: 'مدینه منوره',
-      phone: '+966 14 987 6543',
-      email: 'contact@madina-trans.sa',
-      balance: 1200,
-      ledger: [
-        { id: 'l3', date: '۱۴۰۳/۰۳/۰۸', description: 'ترانسپورت جده-مدینه', debit: 1200, credit: 0 }
-      ]
+  const [data, setData] = useState<AppData>(() => {
+    const saved = localStorage.getItem('fuelpro_data');
+    return saved ? JSON.parse(saved) : INITIAL_DATA;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fuelpro_data', JSON.stringify(data));
+  }, [data]);
+
+  const handleAddSale = (sale: Sale) => {
+    setData(prev => ({
+      ...prev,
+      sales: [sale, ...prev.sales]
+    }));
+  };
+
+  const handleDeleteSale = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      sales: prev.sales.filter(s => s.id !== id)
+    }));
+  };
+
+  const handleAddPurchase = (purchase: Purchase) => {
+    setData(prev => ({
+      ...prev,
+      purchases: [purchase, ...prev.purchases]
+    }));
+  };
+
+  const handleDeletePurchase = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      purchases: prev.purchases.filter(p => p.id !== id)
+    }));
+  };
+
+  const handleAddCustomer = (customer: Customer) => {
+    setData(prev => ({
+      ...prev,
+      customers: [customer, ...prev.customers]
+    }));
+  };
+
+  const handleDeleteCustomer = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      customers: prev.customers.filter(c => c.id !== id)
+    }));
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard data={data} />;
+      case 'sales':
+        return <SalesJournal data={data} onAddSale={handleAddSale} onDeleteSale={handleDeleteSale} />;
+      case 'purchases':
+        return <PurchaseJournal data={data} onAddPurchase={handleAddPurchase} onDeletePurchase={handleDeletePurchase} />;
+      case 'customers':
+        return <Customers data={data} onAddCustomer={handleAddCustomer} onDeleteCustomer={handleDeleteCustomer} />;
+      case 'reports':
+        return <Reports data={data} />;
+      case 'settings':
+        return (
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
+            <h2 className="text-xl font-bold mb-6">تنظیمات سیستم</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">نام شرکت</label>
+                <input
+                  type="text"
+                  className="w-full p-2 border border-gray-200 rounded-lg"
+                  value={data.settings.companyName}
+                  onChange={(e) => setData({...data, settings: {...data.settings, companyName: e.target.value}})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">حد اقل موجودی برای هشدار (لیتر)</label>
+                <input
+                  type="number"
+                  className="w-full p-2 border border-gray-200 rounded-lg"
+                  value={data.settings.lowStockThreshold}
+                  onChange={(e) => setData({...data, settings: {...data.settings, lowStockThreshold: parseInt(e.target.value)}})}
+                />
+              </div>
+              <div className="pt-6">
+                <button 
+                  onClick={() => {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href",     dataStr);
+                    downloadAnchorNode.setAttribute("download", `fuelpro_backup_${new Date().toISOString()}.json`);
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                  }}
+                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors"
+                >
+                  پشتیبان‌گیری (بکاپ) از داده‌ها
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-8">نسخه: 1.0.0 AF Edition</p>
+            </div>
+          </div>
+        );
+      default:
+        return <Dashboard data={data} />;
     }
-  ]);
-
-  const [travelers, setTravelers] = useState<any[]>([
-    {
-      id: '1',
-      code: 'TRV-1042',
-      name: 'احمد رحمانی',
-      tripType: 'عمره',
-      passport: 'P1234567',
-      phone: '0788888888',
-      status: 'تایید شده',
-      date: '1403/02/15',
-      tripDate: '1403/05/20',
-      saudiRepresentative: 'شركة مكة للفنادق والخدمات',
-      representativeFee: '50',
-      visaProviderCompany: 'شركة مكة للفنادق والخدمات',
-      visaPurchase: '350',
-      visaSelling: '400',
-      flightRoute: 'کابل-جده',
-      flightPurchase: '450',
-      flightSelling: '520',
-      hotelNights: '5',
-      hotelPurchase: '40',
-      hotelSelling: '50',
-      hotelMakkahNights: '5',
-      hotelMakkahPurchase: '60',
-      hotelMakkahSelling: '70',
-      transportPurchase: '80',
-      transportSelling: '100',
-      totalReceived: '500',
-      totalPayable: '1520',
-      ledger: [
-        { id: 'l1', date: '1403/02/15', description: 'فروش پکیج عمره', debit: 1520, credit: 0 },
-        { id: 'l2', date: '1403/02/16', description: 'رسید قسط اول', debit: 0, credit: 500 }
-      ]
-    }
-  ]);
-
-  const [expenses, setExpenses] = useState<any[]>([
-    { id: '1', description: 'کرایه دفتر مرکزی - ماه جوزا', amount: '400', category: 'کرایه', date: '1403/03/01', payee: 'مالک ساختمان' },
-    { id: '2', description: 'معاشات کارمندان بخش فروش', amount: '1200', category: 'معاشات', date: '1403/03/05', payee: 'کارمندان' },
-    { id: '3', description: 'بیل برق و انترنت دفتر', amount: '60', category: 'خدمات', date: '1403/03/08', payee: 'شرکت برشنا / افغان تلیکام' }
-  ]);
-
-  const [transactions, setTransactions] = useState<any[]>([
-    { id: '1', date: '1403/05/01', type: 'دریافت', category: 'دریافت از حاجی', amount: 500, person: 'احمد رحمانی', period: 'دوره حج 1403 - کاروان اول', description: 'پیش‌پرداخت قسط اول', status: 'تأیید شده' },
-    { id: '2', date: '1403/05/02', type: 'پرداخت', category: 'مصرف دوا', amount: 100, person: 'دواخانه مرکزی', period: 'دوره حج 1403 - کاروان اول', description: 'خرید تجهیزات صحی اولیه', status: 'تأیید شده' }
-  ]);
-
-  const handleUpdateCompanies = (updatedCompanies: ArabicCompany[]) => {
-    setCompanies(updatedCompanies);
-  };
-
-  const handleUpdateTravelers = (updatedTravelers: any[]) => {
-    setTravelers(updatedTravelers);
-  };
-
-  const handleAddExpense = (newExpense: any) => {
-    setExpenses([newExpense, ...expenses]);
-    
-    // Auto-sync with CashBox
-    const newTransaction = {
-      id: Date.now().toString() + '-sync',
-      date: newExpense.date,
-      type: 'پرداخت',
-      category: newExpense.category === 'معاشات' ? 'معاش' : (newExpense.category === 'کرایه' ? 'پرداخت کرایه' : 'سایر مصارف'),
-      amount: parseFloat(newExpense.amount.replace(/,/g, '')),
-      person: newExpense.payee,
-      period: 'دوره جاری',
-      description: `ثبت خودکار از مصارف: ${newExpense.description}`,
-      status: 'تأیید شده'
-    };
-    setTransactions([newTransaction, ...transactions]);
-  };
-
-  const handleDeleteExpense = (id: string) => {
-    setExpenses(expenses.filter(e => e.id !== id));
-  };
-
-  const handleAddTransaction = (newTransaction: any) => {
-    setTransactions([newTransaction, ...transactions]);
-
-    // Auto-sync with Expenses if it's an expense category
-    const expenseCategories = ['مصرف دوا', 'پرداخت کرایه', 'معاش', 'مصارف فوری حج'];
-    if (newTransaction.type === 'پرداخت' && expenseCategories.includes(newTransaction.category)) {
-      const categoryMapping: any = {
-        'مصرف دوا': 'خدمات',
-        'پرداخت کرایه': 'کرایه',
-        'معاش': 'معاشات',
-        'مصارف فوری حج': 'عمومی'
-      };
-      
-      const newExpense = {
-        id: Date.now().toString() + '-sync-exp',
-        description: newTransaction.description,
-        amount: newTransaction.amount.toString(),
-        category: categoryMapping[newTransaction.category] || 'عمومی',
-        date: newTransaction.date,
-        payee: newTransaction.person
-      };
-      setExpenses([newExpense, ...expenses]);
-    }
-  };
-
-  const handleDeleteTransaction = (id: string) => {
-    setTransactions(transactions.filter(t => t.id !== id));
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 text-right" dir="rtl">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="flex-1 overflow-y-auto">
-        {activeTab === 'dashboard' ? (
-          <Dashboard />
-        ) : activeTab === 'travelers' ? (
-          <Travelers 
-            companies={companies} 
-            travelers={travelers} 
-            onUpdateTravelers={handleUpdateTravelers}
-            onUpdateCompanies={handleUpdateCompanies}
-          />
-        ) : activeTab === 'ledger' ? (
-          <GeneralLedger />
-        ) : activeTab === 'cashbox' ? (
-          <CashBox 
-            transactions={transactions} 
-            onAddTransaction={handleAddTransaction} 
-            onDeleteTransaction={handleDeleteTransaction}
-          />
-        ) : activeTab === 'arabic-companies' ? (
-          <ArabicCompanies 
-            companies={companies} 
-            onUpdateCompanies={handleUpdateCompanies} 
-          />
-        ) : activeTab === 'reports' ? (
-          <Reports travelers={travelers} />
-        ) : activeTab === 'services' ? (
-          <Services />
-        ) : activeTab === 'accounts' ? (
-          <Accounts />
-        ) : activeTab === 'expenses' ? (
-          <Expenses 
-            expenses={expenses} 
-            onAddExpense={handleAddExpense} 
-            onDeleteExpense={handleDeleteExpense}
-          />
-        ) : activeTab === 'commission' ? (
-          <Commission />
-        ) : activeTab === 'history' ? (
-          <History />
-        ) : (
-          <div className="flex items-center justify-center h-full text-slate-400 font-medium">
-             این بخش در حال توسعه است
-          </div>
-        )}
-      </main>
-    </div>
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+      {renderContent()}
+    </Layout>
   );
 };
 

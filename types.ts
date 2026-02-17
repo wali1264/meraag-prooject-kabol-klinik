@@ -1,23 +1,44 @@
-// Added React import to resolve missing namespace errors for React.ReactNode
-import React from 'react';
 
-export interface StatData {
-  title: string;
-  value: string;
-  currency: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  trend?: string;
+export enum CustomerType {
+  BUYER = 'خریدار',
+  SELLER = 'فروشنده',
+  BOTH = 'هر دو'
 }
 
-export interface ChartData {
-  name: string;
-  value: number;
-  fill: string;
-}
-
-export interface MenuItem {
+export interface Customer {
   id: string;
-  label: string;
-  icon: React.ReactNode;
+  code: string;
+  name: string;
+  phone: string;
+  type: CustomerType;
+  createdAt: string;
+}
+
+export interface Sale {
+  id: string;
+  date: string;
+  customerId: string;
+  description: string;
+  liters: number;
+  pricePerLiter: number;
+  total: number;
+}
+
+export interface Purchase {
+  id: string;
+  date: string;
+  description: string; // Tanker or Company Name
+  liters: number;
+  pricePerLiter: number;
+  total: number;
+}
+
+export interface AppData {
+  customers: Customer[];
+  sales: Sale[];
+  purchases: Purchase[];
+  settings: {
+    lowStockThreshold: number;
+    companyName: string;
+  };
 }
