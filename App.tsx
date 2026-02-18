@@ -19,7 +19,7 @@ const INITIAL_DATA: AppData = {
   settings: {
     lowStockThreshold: 1000,
     companyName: 'FuelPro AF',
-    password: '1234' // Default password
+    password: '0796606605' // Updated default password
   }
 };
 
@@ -110,8 +110,8 @@ const App: React.FC = () => {
             <div>
               <input
                 type="password"
-                className={`w-full p-4 bg-gray-50 border ${loginError ? 'border-red-500' : 'border-gray-200'} rounded-2xl text-center text-2xl tracking-[0.5em] focus:ring-2 focus:ring-blue-500 outline-none transition-all`}
-                placeholder="****"
+                className={`w-full p-4 bg-gray-50 border ${loginError ? 'border-red-500' : 'border-gray-200'} rounded-2xl text-center text-lg tracking-[0.2em] focus:ring-2 focus:ring-blue-500 outline-none transition-all`}
+                placeholder="رمز عبور"
                 autoFocus
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
@@ -125,7 +125,7 @@ const App: React.FC = () => {
               تایید و ورود
             </button>
           </form>
-          <p className="mt-8 text-xs text-gray-400 font-light">رمز عبور پیش‌فرض: 1234</p>
+          <p className="mt-8 text-xs text-gray-400 font-light">رمز عبور پیش‌فرض: 0796606605</p>
         </div>
       </div>
     );
