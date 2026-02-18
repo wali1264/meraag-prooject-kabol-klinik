@@ -40,5 +40,6 @@ export interface AppData {
   settings: {
     lowStockThreshold: number;
     companyName: string;
+    password: string; // New field for master password
   };
 }
