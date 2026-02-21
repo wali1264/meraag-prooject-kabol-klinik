@@ -1,9 +1,4 @@
-
-export enum CustomerType {
-  BUYER = 'خریدار',
-  SELLER = 'فروشنده',
-  BOTH = 'هر دو'
-}
+export type CustomerType = 'buyer' | 'seller' | 'both';
 
 export interface Customer {
   id: string;
@@ -14,7 +9,9 @@ export interface Customer {
   createdAt: string;
 }
 
-export interface Sale {
+export type TransactionType = 'sale' | 'purchase';
+
+export interface Transaction {
   id: string;
   date: string;
   customerId: string;
@@ -22,24 +19,30 @@ export interface Sale {
   liters: number;
   pricePerLiter: number;
   total: number;
+  type: TransactionType;
+  createdAt: string;
 }
 
-export interface Purchase {
+export interface Expense {
   id: string;
   date: string;
-  description: string; // Tanker or Company Name
-  liters: number;
-  pricePerLiter: number;
-  total: number;
+  category: string;
+  description: string;
+  amount: number;
+  createdAt: string;
 }
 
-export interface AppData {
-  customers: Customer[];
-  sales: Sale[];
-  purchases: Purchase[];
-  settings: {
-    lowStockThreshold: number;
-    companyName: string;
-    password: string; // New field for master password
-  };
+export interface InventoryStats {
+  currentStock: number;
+  avgBuyPrice: number;
+  totalSalesValue: number;
+  totalPurchaseValue: number;
+  profit: number;
+}
+
+export interface CustomerBalance {
+  customerId: string;
+  totalBought: number; // Money they spent (Sales to them)
+  totalSold: number;   // Money we paid them (Purchases from them)
+  balance: number;     // totalBought - totalSold (>0 they owe us, <0 we owe them)
 }
